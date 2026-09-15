@@ -3,35 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AbsensiMapping</title>
-  
+  <title>Portal Absensi Mapping</title>
   <link rel="manifest" href="manifest.json">
-  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <style>
     :root { --primary: #2563eb; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --muted: #6b7280; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; }
     #app-container { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); position: relative; overflow-x: hidden; }
-    
     .hidden { display: none !important; }
     .card { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    
     h2 { font-weight: 700; font-size: 24px; margin-bottom: 10px; color: var(--primary); }
     h3 { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
     .form-group { margin-bottom: 15px; text-align: left; }
     .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--muted); }
     .form-control { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; }
     .form-control:focus { border-color: var(--primary); }
-    
     .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; color: white; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 10px; }
     .btn-primary { background: var(--primary); }
     .btn-success { background: var(--success); }
     .btn-danger { background: var(--danger); }
-    
     .header { background: var(--primary); color: white; padding: 20px 15px 40px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
     .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .btn-logout { background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; }
@@ -39,15 +32,12 @@
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
     .info-box { background: #f9fafb; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #eee; font-size: 13px; }
     .info-box span { display: block; font-weight: 700; font-size: 14px; color: var(--primary); margin-top: 4px; }
-    
     #areaKamera { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 15px; }
     video, canvas { width: 100%; border-radius: 12px; max-height: 70vh; object-fit: cover; background: #222; }
-    
     .history-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; align-items: center; }
     .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: white; }
     .badge.Masuk { background: var(--success); }
     .badge.Pulang { background: var(--primary); }
-    
     .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -56,7 +46,6 @@
 <body>
 
 <div id="app-container">
-
   <div id="loader" class="loader-overlay hidden">
     <div class="spinner"></div>
     <p style="font-weight: 600; color: var(--muted);" id="loader-text">Memproses...</p>
@@ -65,7 +54,7 @@
   <div id="login-view">
     <div class="card" style="margin-top: 60px; text-align: center;">
       <i class="fa-solid fa-location-crosshairs" style="font-size: 50px; color: var(--primary); margin-bottom: 15px;"></i>
-      <h2>Absensi Mapping</h2>
+      <h2>Portal Absensi</h2>
       <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Silakan masuk untuk absen</p>
 
       <div class="form-group">
@@ -128,11 +117,9 @@
       <button class="btn btn-danger" onclick="tutupKamera()"><i class="fa-solid fa-xmark"></i> Batal</button>
     </div>
   </div>
-
 </div>
 
 <script>
-
   const API_URL = "https://script.google.com/macros/s/AKfycbztoJ15wHaBBo5O7ImZWbF7SmlPH-czhxed6K8C9eKnQWVN8r08Y9xfItNFxrpZfNdn/exec"; 
 
   let dataUser = {};
@@ -152,8 +139,8 @@
     
     fetch(API_URL, {
       method: 'POST',
-      redirect: 'follow', // Penting untuk melewati redirect Google
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // Hindari CORS preflight
+      redirect: 'follow',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ aksi: "login", username: u, password: p })
     })
     .then(res => res.json())
@@ -306,6 +293,5 @@
     }
   }
 </script>
-
 </body>
 </html>
