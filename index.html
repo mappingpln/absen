@@ -3,55 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HRIS Absensi</title>
-  <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>Portal Absensi</title>
+  <link rel="manifest" href="file:///D|/ISI OTOMATIS/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    :root { --bg: #f3f4f6; --main: #2563eb; --card: #fff; --text: #1f2937; }
+    :root { --bg: #f8fafc; --main: #0ea5e9; --main-hover: #0284c7; --card: #ffffff; --text: #334155; --text-light: #64748b; --border: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background: var(--bg); display: flex; justify-content: center; }
-    .app-container { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); position: relative; }
+    body { background: var(--bg); display: flex; justify-content: center; color: var(--text); }
+    .app-container { width: 100%; max-width: 500px; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 20px; }
     .hidden { display: none !important; }
-    .card { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .form-control { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; }
-    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; color: #fff; cursor: pointer; margin-bottom: 10px; }
-    .btn-main { background: var(--main); }
-    .btn-green { background: #10b981; }
-    .btn-red { background: #ef4444; }
-    .btn-out { background: transparent; border: 1px solid var(--main); color: var(--main); }
-    .map-box { height: 250px; width: 100%; border-radius: 8px; margin-bottom: 10px; }
-    video, canvas { width: 100%; border-radius: 8px; }
+    .card { background: var(--card); border-radius: 16px; padding: 24px; margin: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+    .form-control { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; font-size: 15px; outline: none; transition: border 0.2s; }
+    .form-control:focus { border-color: var(--main); }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+    .btn-main { background: var(--main); color: #fff; }
+    .btn-main:hover { background: var(--main-hover); }
+    .btn-green { background: #10b981; color: #fff; }
+    .btn-green:hover { background: #059669; }
+    .btn-orange { background: #f59e0b; color: #fff; }
+    .btn-orange:hover { background: #d97706; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-red:hover { background: #dc2626; }
+    .btn-out { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-out:hover { border-color: var(--main); color: var(--main); }
+    .map-box { height: 250px; width: 100%; border-radius: 10px; margin-bottom: 12px; z-index: 1; }
+    .logo-img { max-height: 70px; margin: 0 auto 20px; display: block; object-fit: contain; }
+    .clock-box { text-align: center; margin-bottom: 20px; padding: 15px; background: #f1f5f9; border-radius: 10px; }
+    .clock-time { font-size: 28px; font-weight: 700; color: var(--main); }
+    .clock-date { font-size: 14px; color: var(--text-light); margin-top: 5px; }
+    .top-icons { text-align: center; margin-top: 20px; font-size: 24px; }
+    .top-icons a { margin: 0 12px; color: var(--text-light); transition: color 0.2s; }
+    .top-icons a:hover { color: var(--main); }
+    video, canvas { width: 100%; border-radius: 10px; }
+    hr { border: 0; height: 1px; background: var(--border); margin: 20px 0; }
+    .lbl { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-light); }
   </style>
 </head>
 <body>
 <div class="app-container">
-  <div id="login-view" class="card" style="margin-top: 50px;">
-    <h2 style="text-align:center; color:var(--main); margin-bottom:20px;">Portal Absensi</h2>
+  <div id="login-view" class="card" style="margin-top: 10vh;">
+    <img id="logoLogin" src="https://upload.wikimedia.org/wikipedia/commons/9/97/Logo_PLN.png" class="logo-img" alt="Logo">
+    <h2 style="text-align:center; margin-bottom:24px; color:var(--text);">Portal Absensi</h2>
     <input type="text" id="user" class="form-control" placeholder="Username / ID">
     <div style="position: relative;">
       <input type="password" id="pass" class="form-control" placeholder="Password">
-      <i class="fa-solid fa-eye" id="eye" onclick="togglePass()" style="position: absolute; right: 15px; top: 12px; cursor: pointer; color:#666;"></i>
+      <i class="fa-solid fa-eye" id="eye" onclick="togglePass()" style="position: absolute; right: 15px; top: 14px; cursor: pointer; color:var(--text-light);"></i>
     </div>
     <button class="btn btn-main" onclick="doLogin()">Masuk</button>
   </div>
 
-  <div id="first-view" class="card hidden" style="margin-top: 50px;">
-    <h2>Ganti Password Wajib</h2>
-    <input type="password" id="newPass" class="form-control" placeholder="Password Baru">
-    <button class="btn btn-green" onclick="doGantiPass()">Simpan</button>
+  <div id="first-view" class="card hidden" style="margin-top: 10vh;">
+    <img id="logoFirst" src="" class="logo-img" alt="Logo">
+    <h2 style="text-align:center; margin-bottom:20px;">Ubah Sandi Baru</h2>
+    <input type="password" id="newPass" class="form-control" placeholder="Masukkan Sandi Baru">
+    <button class="btn btn-green" onclick="doGantiPass()">Simpan Sandi</button>
   </div>
 
   <div id="staff-view" class="hidden">
-    <div class="card">
-      <button id="btnInstall" class="btn btn-out hidden" style="border-color:#10b981; color:#10b981;" onclick="installApp()"><i class="fa-solid fa-download"></i> Jadikan Aplikasi</button>
-      <h2 id="sNama"></h2>
-      <p id="sArea" style="font-size:12px; color:#666; margin-bottom:15px;"></p>
+    <div class="card" style="margin-top:20px;">
+      <img id="logoStaff" src="" class="logo-img" alt="Logo">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div>
+          <h2 id="sNama" style="font-size:20px;"></h2>
+          <p id="sArea" style="font-size:13px; color:var(--text-light);"></p>
+        </div>
+        <button onclick="doExit()" style="background:none; border:none; font-size:22px; color:var(--text-light); cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+
+      <div class="clock-box">
+        <div id="cTime" class="clock-time">00:00:00</div>
+        <div id="cDate" class="clock-date">Memuat...</div>
+      </div>
       
-      <div id="boxHariLibur" class="hidden" style="background:#ef4444; color:#fff; padding:10px; border-radius:8px; text-align:center; margin-bottom:15px;">
+      <button id="btnInstall" class="btn btn-out hidden" style="border-color:#10b981; color:#10b981;" onclick="installApp()"><i class="fa-solid fa-download"></i> Install Aplikasi</button>
+      
+      <div id="boxHariLibur" class="hidden" style="background:#ef4444; color:#fff; padding:12px; border-radius:10px; text-align:center; margin-bottom:15px; font-weight:600;">
         HARI LIBUR
       </div>
       
@@ -60,59 +91,89 @@
         <button class="btn btn-main" id="btnPulang" onclick="tryPulang()">Absen Pulang</button>
       </div>
 
-      <button class="btn btn-out" onclick="document.getElementById('izinBox').classList.toggle('hidden')">Izin</button>
-      <div id="izinBox" class="hidden" style="margin-top:10px;">
-        <textarea id="ketIzin" class="form-control" maxlength="255" placeholder="Keterangan maks 255 huruf"></textarea>
-        <button class="btn btn-main" onclick="kirimIzin()">Kirim Izin</button>
+      <button class="btn btn-out" id="btnIzin" onclick="document.getElementById('izinBox').classList.toggle('hidden')">Izin / Sakit</button>
+      <div id="izinBox" class="hidden" style="margin-top:12px;">
+        <textarea id="ketIzin" class="form-control" maxlength="255" placeholder="Berikan keterangan (Maks 255 karakter)" rows="3"></textarea>
+        <button class="btn btn-orange" onclick="kirimIzin()">Simpan Data Izin</button>
       </div>
       
-      <hr style="margin:15px 0;">
-      <input type="month" id="blnCetak" class="form-control">
-      <button class="btn btn-out" onclick="cetakAbsen()">Cetak Bulanan</button>
+      <hr>
+      <span class="lbl">Cetak Laporan</span>
+      <div style="display:flex; gap:10px;">
+        <input type="month" id="blnCetak" class="form-control" style="margin-bottom:0;">
+        <button class="btn btn-out" onclick="cetakAbsen()" style="margin-bottom:0; width:auto; padding:0 20px;"><i class="fa-solid fa-print"></i></button>
+      </div>
     </div>
   </div>
 
   <div id="admin-view" class="hidden">
-    <div class="card">
-      <h2>Panel Admin</h2>
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="font-size:20px;">Panel Admin</h2>
+        <button onclick="doExit()" style="background:none; border:none; font-size:22px; color:var(--text-light); cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+      
+      <span class="lbl">Pengaturan Umum</span>
       <select id="aLock" class="form-control"><option value="true">Lock Device ID: ON</option><option value="false">Lock Device ID: OFF</option></select>
-      <textarea id="aHead" class="form-control" placeholder="HTML Header Cetak"></textarea>
-      <textarea id="aFoot" class="form-control" placeholder="HTML Footer Cetak"></textarea>
+      <input type="text" id="aLogo" class="form-control" placeholder="URL Gambar Logo">
+      <textarea id="aHead" class="form-control" placeholder="HTML Header Cetak A4" rows="3"></textarea>
+      <textarea id="aFoot" class="form-control" placeholder="HTML Footer Cetak A4" rows="3"></textarea>
       <button class="btn btn-green" onclick="saveSet()">Simpan Pengaturan</button>
       
-      <hr style="margin:15px 0;">
-      <input type="date" id="aLibur" class="form-control">
-      <button class="btn btn-out" onclick="addLibur()">Tambah Hari Libur</button>
+      <hr>
+      <span class="lbl">Kalender Libur</span>
+      <div style="display:flex; gap:10px;">
+        <input type="date" id="aLibur" class="form-control" style="margin-bottom:0;">
+        <button class="btn btn-out" onclick="addLibur()" style="margin-bottom:0; width:auto; padding:0 20px;"><i class="fa-solid fa-plus"></i></button>
+      </div>
       
-      <hr style="margin:15px 0;">
-      <select id="rStaff" class="form-control"></select>
-      <button class="btn btn-red" onclick="resetKunci()">Buka Kunci HP</button>
-      <button class="btn btn-out" onclick="resetKunci('ALL')" style="color:red; border-color:red;">Reset Semua Sandi & HP</button>
+      <hr>
+      <span class="lbl">Manajemen Akun (Reset Sandi & HP)</span>
+      <select id="rUser" class="form-control"></select>
+      <button class="btn btn-red" onclick="resetAkun()">Reset Akun Terpilih</button>
+
+      <hr>
+      <span class="lbl">Tambah / Edit User</span>
+      <select id="eList" class="form-control" onchange="loadFormEdit()"></select>
+      <input type="text" id="eId" class="form-control" placeholder="ID Pegawai">
+      <input type="text" id="eNama" class="form-control" placeholder="Nama Lengkap">
+      <input type="text" id="ePass" class="form-control" placeholder="Sandi">
+      <input type="text" id="eJab" class="form-control" placeholder="Jabatan">
+      <input type="text" id="eArea" class="form-control" placeholder="Area">
+      <select id="eRole" class="form-control"><option value="staff">Staff</option><option value="admin">Admin</option></select>
+      <div id="map" class="map-box"></div>
+      <input type="text" id="eKoor" class="form-control" readonly placeholder="Klik peta untuk titik">
+      <button class="btn btn-main" onclick="saveUser()">Simpan Data Pegawai</button>
     </div>
+
     <div class="card hidden" id="sa-box">
-      <h3 style="color:#ef4444;">Bypass Absen Superadmin</h3>
+      <h3 style="color:#ef4444; margin-bottom:15px;">Bypass Superadmin</h3>
       <select id="saStaff" class="form-control"></select>
       <select id="saJenis" class="form-control"><option value="Masuk">Masuk</option><option value="Pulang">Pulang</option></select>
       <input type="datetime-local" id="saWaktu" class="form-control">
       <div id="saMap" class="map-box"></div>
       <input type="text" id="saKoor" class="form-control" readonly placeholder="Klik peta">
-      <button class="btn btn-red" onclick="kirimBypass()">Kirim Bypass</button>
+      <button class="btn btn-red" onclick="kirimBypass()">Suntik Data Absen</button>
     </div>
   </div>
 
-  <div id="cam-view" class="card hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:99; margin:0; border-radius:0;">
+  <div id="cam-view" class="card hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:99; margin:0; border-radius:0; border:none;">
+    <h3 style="text-align:center; margin-bottom:15px;" id="camTitle">Kamera Absen</h3>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" class="hidden"></canvas>
-    <button class="btn btn-green" id="btnJepret" onclick="jepret()">Jepret</button>
-    <button class="btn btn-red" onclick="tutupKamera()">Batal</button>
+    <div style="margin-top:20px; display:flex; gap:10px;">
+      <button class="btn btn-out" onclick="tutupKamera()">Batal</button>
+      <button class="btn btn-main" id="btnJepret" onclick="jepret()">Jepret</button>
+    </div>
   </div>
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbztoJ15wHaBBo5O7ImZWbF7SmlPH-czhxed6K8C9eKnQWVN8r08Y9xfItNFxrpZfNdn/exec";
-  let uData = {};
-  let jAbsen = "", ketTmp = "";
-  let stream = null, bMapInit = false, bMap = null, bMarker = null, staffList = [];
+  const API_URL = "MASUKKAN_URL_APPS_SCRIPT_DISINI";
+  let uData = {}, jAbsen = "", ketTmp = "", stream = null;
+  let sMapInit = false, bMapInit = false, sMap = null, bMap = null, sMarker = null, bMarker = null;
+  let allUsers = [], staffList = [];
+  let clockInt;
 
   function getDid() {
     let d = localStorage.getItem("hris_did");
@@ -121,26 +182,35 @@
   }
   function getUa() { let m = navigator.userAgent.match(/\((.*?)\)/); return m ? m[1] : "Unknown"; }
   function reqAPI(body, cb) {
-    Swal.fire({title: 'Memproses...', allowOutsideClick: false}); Swal.showLoading();
+    Swal.fire({title: 'Memproses...', allowOutsideClick: false, showConfirmButton:false}); Swal.showLoading();
     fetch(API_URL, { method: 'POST', redirect: 'follow', headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body) })
-    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => Swal.fire('Error', 'Gagal', 'error'));
+    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => Swal.fire('Error', 'Gangguan koneksi internet', 'error'));
   }
   function show(id) { document.querySelectorAll('.app-container > div').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
   function togglePass() {
     let p = document.getElementById('pass'); let i = document.getElementById('eye');
     p.type = p.type === "password" ? "text" : "password"; i.className = p.type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
   }
-  function full() { let d = document.documentElement; if (d.requestFullscreen) d.requestFullscreen().catch(()=>{}); }
+  function applyLogo(url) {
+    if(!url) return;
+    document.querySelectorAll('.logo-img').forEach(img => img.src = url);
+  }
+  function doExit() {
+    if(clockInt) clearInterval(clockInt);
+    uData = {}; show('login-view');
+  }
 
   function doLogin() {
     let u = document.getElementById('user').value, p = document.getElementById('pass').value;
     reqAPI({aksi: "login", user: u, pass: p, deviceId: getDid()}, res => {
       if (res.status === "success") {
-        uData = res; uData.u = u; full();
+        uData = res; uData.u = u;
+        if(res.setting && res.setting.logo) applyLogo(res.setting.logo);
         if (res.isFirst === true || res.isFirst === "TRUE") show('first-view');
         else if (res.role === "admin" || res.role === "superadmin") { 
           show('admin-view'); 
           document.getElementById('aLock').value = res.setting.lock.toString();
+          document.getElementById('aLogo').value = res.setting.logo;
           document.getElementById('aHead').value = res.setting.header;
           document.getElementById('aFoot').value = res.setting.footer;
           loadAdminData();
@@ -148,38 +218,62 @@
         } else { 
           show('staff-view'); 
           document.getElementById('sNama').innerText = res.nama; document.getElementById('sArea').innerText = res.area;
-          setupRules();
+          setupRules(); runClock();
         }
       } else Swal.fire('Gagal', res.msg, 'error');
     });
   }
 
+  function runClock() {
+    let dEl = document.getElementById('cDate'), tEl = document.getElementById('cTime');
+    let days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    let mos = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    if(clockInt) clearInterval(clockInt);
+    clockInt = setInterval(() => {
+      let d = new Date();
+      tEl.innerText = String(d.getHours()).padStart(2,'0') + ":" + String(d.getMinutes()).padStart(2,'0') + ":" + String(d.getSeconds()).padStart(2,'0');
+      dEl.innerText = days[d.getDay()] + ", " + d.getDate() + " " + mos[d.getMonth()] + " " + d.getFullYear();
+    }, 1000);
+  }
+
   function setupRules() {
-    let now = new Date();
-    let day = now.getDay();
+    let now = new Date(), day = now.getDay();
     let tglStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-    
     let isLibur = day === 0 || day === 6 || uData.setting.libur.includes(tglStr);
+    
+    let bM = document.getElementById('btnMasuk'), bP = document.getElementById('btnPulang'), bI = document.getElementById('btnIzin');
+    bM.innerText = "Absen Masuk"; bP.innerText = "Absen Pulang"; bM.className = "btn btn-green"; bP.className = "btn btn-main";
+    bM.disabled = false; bP.disabled = false;
     
     if (isLibur) {
       document.getElementById('boxHariLibur').classList.remove('hidden');
       document.getElementById('boxAbsen').classList.add('hidden');
     } else {
-      if(uData.ctx.masukToday) document.getElementById('btnMasuk').disabled = true;
-      else document.getElementById('btnPulang').disabled = true;
+      document.getElementById('boxHariLibur').classList.add('hidden');
+      document.getElementById('boxAbsen').classList.remove('hidden');
+      if(uData.ctx.masukToday) {
+        bM.innerText = "Edit Absen Masuk"; bM.className = "btn btn-orange";
+        bP.disabled = false;
+      } else {
+        bP.disabled = true;
+      }
+      if(uData.ctx.pulangToday) {
+        bP.innerText = "Edit Absen Pulang"; bP.className = "btn btn-orange";
+      }
     }
+    if(uData.ctx.izinToday) { bI.innerText = "Edit Data Izin"; }
   }
 
   async function tryMasuk() {
     ketTmp = "";
     if (uData.ctx.missedPulang) {
-      const {value: k1} = await Swal.fire({title: 'Lupa Pulang', text: 'Kemarin Anda tidak klik pulang. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
-      if(!k1) return; ketTmp += "[Kemarin Lupa Pulang: " + k1 + "] ";
+      const {value: k1} = await Swal.fire({title: 'Lupa Pulang', text: 'Kemarin Anda belum absen pulang. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k1) return; ketTmp += "[Lupa Pulang: " + k1 + "] ";
     }
     let h = new Date().getHours();
-    if (h >= 9) {
-      const {value: k2} = await Swal.fire({title: 'Terlambat Masuk', text: 'Sudah lewat jam 09:00. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
-      if(!k2) return; ketTmp += "[Telat Masuk: " + k2 + "] ";
+    if (h >= 9 && !uData.ctx.masukToday) {
+      const {value: k2} = await Swal.fire({title: 'Terlambat Masuk', text: 'Sudah lewat jam 09:00. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k2) return; ketTmp += "[Telat: " + k2 + "] ";
     }
     bukaKamera('Masuk');
   }
@@ -190,22 +284,22 @@
     let awal = false;
     if (1 <= d && d <= 4 && h < 16) awal = true;
     if (d === 5 && (h < 16 || (h === 16 && m < 30))) awal = true;
-    
-    if (awal) {
-      const {value: k1} = await Swal.fire({title: 'Pulang Cepat', text: 'Belum waktunya pulang. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
-      if(!k1) return; ketTmp += "[Pulang Cepat: " + k1 + "] ";
+    if (awal && !uData.ctx.pulangToday) {
+      const {value: k1} = await Swal.fire({title: 'Pulang Awal', text: 'Belum waktunya pulang. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k1) return; ketTmp += "[Pulang Awal: " + k1 + "] ";
     }
     bukaKamera('Pulang');
   }
 
   function doGantiPass() {
     reqAPI({aksi: "gantiPass", user: uData.u, passBaru: document.getElementById('newPass').value}, res => {
-      if(res.status==="success") { Swal.fire('Berhasil','Silakan login','success'); show('login-view'); }
+      if(res.status==="success") { Swal.fire('Berhasil','Silakan login ulang','success').then(()=>doExit()); }
     });
   }
 
   function bukaKamera(j) {
-    jAbsen = j; show('cam-view'); document.getElementById('btnJepret').disabled = false;
+    jAbsen = j; document.getElementById('camTitle').innerText = "Kamera " + j;
+    show('cam-view'); document.getElementById('btnJepret').disabled = false;
     navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}}).then(s => { stream = s; document.getElementById('video').srcObject = s; });
   }
 
@@ -220,24 +314,27 @@
       c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0, c.width, c.height);
       let b64 = c.toDataURL("image/jpeg", 0.7); tutupKamera();
       reqAPI({aksi: "absen", data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
-        if(res.status==="success") Swal.fire('Berhasil','','success').then(()=>location.reload());
+        if(res.status==="success") Swal.fire('Berhasil','Data tersimpan','success').then(()=>doExit());
       });
-    }, ()=> tutupKamera(), {enableHighAccuracy: true});
+    }, err => {
+      Swal.fire('GPS Gagal', 'Aktifkan GPS perangkat Anda!', 'error');
+      document.getElementById('btnJepret').disabled = false; tutupKamera();
+    }, {enableHighAccuracy: true, timeout: 15000});
   }
 
   function kirimIzin() {
     reqAPI({aksi: "izin", data: {nama: uData.nama, ket: document.getElementById('ketIzin').value, area: uData.area, perangkat: getUa()}}, res => {
-      if(res.status==="success") Swal.fire('Berhasil','','success');
+      if(res.status==="success") Swal.fire('Berhasil','Data izin tersimpan','success').then(()=>doExit());
     });
   }
 
   function cetakAbsen() {
     let bln = document.getElementById('blnCetak').value;
-    if(!bln) return Swal.fire('Error','Pilih bulan','error');
+    if(!bln) return Swal.fire('Error','Pilih bulan terlebih dahulu','error');
     reqAPI({aksi: "cetak", user: uData.nama, bulan: bln}, res => {
       let lib = res.set.libur;
-      let html = `<html><head><title>Cetak Absen</title><style>@page{size:A4; margin:15mm;} body{font-family:sans-serif;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #000; padding:8px; text-align:center;} .h{background:#ef4444; color:#fff;}</style></head><body>`;
-      html += `<div>${res.set.header}</div><h2 style="text-align:center;">Data Absensi ${uData.nama} (${bln})</h2><table><tr><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
+      let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:15mm;} body{font-family:sans-serif;} table{width:100%; border-collapse:collapse; margin-top:20px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #000; padding:8px; text-align:center;} .h{background:#ef4444; color:#fff; -webkit-print-color-adjust: exact;}</style></head><body>`;
+      html += `<div>${res.set.header}</div><h2 style="text-align:center; margin-top:10px;">Laporan Kehadiran<br>${uData.nama} (${bln})</h2><table><tr><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
       let y = parseInt(bln.split('-')[0]), m = parseInt(bln.split('-')[1]);
       let maxD = new Date(y, m, 0).getDate();
       for(let i=1; i<=maxD; i++) {
@@ -246,37 +343,97 @@
         let isL = d===0 || d===6 || lib.includes(tStr);
         let msk = res.data.find(x => x.tgl === tStr && x.jenis === "Masuk");
         let plg = res.data.find(x => x.tgl === tStr && x.jenis === "Pulang");
-        html += `<tr class="${isL?'h':''}"><td style="text-align:left;">${tStr}</td><td>${msk?msk.wkt:'-'}</td><td>${plg?plg.wkt:'-'}</td><td style="font-size:12px;">${msk?msk.ket:''}<br>${plg?plg.ket:''}</td></tr>`;
+        let izn = res.data.find(x => x.tgl === tStr && x.jenis === "Izin");
+        
+        let mTxt = msk?msk.wkt:'-'; let pTxt = plg?plg.wkt:'-'; let kTxt = (msk?msk.ket+' ':'') + (plg?plg.ket:'');
+        if(izn) { mTxt = "IZIN"; pTxt = "IZIN"; kTxt = izn.ket; }
+        
+        html += `<tr class="${isL?'h':''}"><td style="text-align:left;">${tStr}</td><td>${mTxt}</td><td>${pTxt}</td><td style="font-size:12px; text-align:left;">${kTxt}</td></tr>`;
       }
-      html += `</table><div style="margin-top:30px;">${res.set.footer}</div></body></html>`;
+      html += `</table><div style="margin-top:20px; page-break-inside:avoid;">${res.set.footer}</div></body></html>`;
       let w = window.open('','_blank'); w.document.write(html); w.document.close();
       setTimeout(()=> w.print(), 800);
     });
   }
 
   function saveSet() {
-    reqAPI({aksi: "saveSet", data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value}}, res => {
-      if(res.status==="success") Swal.fire('Tersimpan','','success');
+    reqAPI({aksi: "saveSet", data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value}}, res => {
+      if(res.status==="success") { Swal.fire('Tersimpan','','success'); applyLogo(document.getElementById('aLogo').value); }
     });
   }
-  function addLibur() { reqAPI({aksi: "addLibur", tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); }
-  function resetKunci(n) {
-    let t = n === 'ALL' ? 'ALL' : document.getElementById('rStaff').value;
-    reqAPI({aksi: "resetDevice", nama: t}, res => { if(res.status==="success") Swal.fire('Berhasil','','success'); });
+  
+  function addLibur() { 
+    if(!document.getElementById('aLibur').value) return;
+    reqAPI({aksi: "addLibur", tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); 
+  }
+  
+  function resetAkun() {
+    let id = document.getElementById('rUser').value;
+    if(!id) return Swal.fire('Error','Pilih akun!','error');
+    reqAPI({aksi: "resetUser", id: id}, res => { if(res.status==="success") Swal.fire('Berhasil','Sandi dan HP direset','success'); });
   }
 
   function loadAdminData() {
-    reqAPI({aksi: "listStaff"}, res => {
+    reqAPI({aksi: "listAllUsers"}, res => {
       if(res.status === "success") {
-        staffList = res.data; let opt = '<option value="">Pilih Staff</option>';
-        res.data.forEach(s => { opt += `<option value="${s.nama}">${s.nama} (${s.area})</option>`; });
-        document.getElementById('rStaff').innerHTML = opt; document.getElementById('saStaff').innerHTML = opt;
+        allUsers = res.data;
+        staffList = allUsers.filter(x => x.role === "staff");
+        
+        let optU = '<option value="">Pilih Akun...</option>';
+        allUsers.forEach(s => { optU += `<option value="${s.id}">${s.id} - ${s.nama}</option>`; });
+        document.getElementById('rUser').innerHTML = optU;
+        
+        let optE = '<option value="">+ Tambah Pegawai Baru</option>';
+        allUsers.forEach(s => { optE += `<option value="${s.id}">Edit: ${s.nama}</option>`; });
+        document.getElementById('eList').innerHTML = optE;
+        
+        let optS = '<option value="">Pilih Staf...</option>';
+        staffList.forEach(s => { optS += `<option value="${s.nama}">${s.nama} (${s.area})</option>`; });
+        document.getElementById('saStaff').innerHTML = optS;
+        
+        loadEditMap();
       }
     });
   }
 
+  function loadFormEdit() {
+    let id = document.getElementById('eList').value;
+    if(!id) {
+      document.getElementById('eId').value = ""; document.getElementById('eNama').value = ""; document.getElementById('ePass').value = "123456";
+      document.getElementById('eJab').value = ""; document.getElementById('eArea').value = ""; document.getElementById('eRole').value = "staff"; document.getElementById('eKoor').value = "";
+      if(sMarker) sMap.removeLayer(sMarker);
+      return;
+    }
+    let d = allUsers.find(x => x.id === id);
+    if(d) {
+      document.getElementById('eId').value = d.id; document.getElementById('eNama').value = d.nama; document.getElementById('ePass').value = d.pass;
+      document.getElementById('eJab').value = d.jab; document.getElementById('eArea').value = d.area; document.getElementById('eRole').value = d.role; document.getElementById('eKoor').value = d.koor;
+      if(d.koor) {
+        let k = d.koor.split(',');
+        if(sMarker) sMap.removeLayer(sMarker);
+        sMarker = L.marker([parseFloat(k[0]), parseFloat(k[1])]).addTo(sMap);
+        sMap.setView([parseFloat(k[0]), parseFloat(k[1])], 15);
+      }
+    }
+  }
+
+  function loadEditMap() {
+    if(sMapInit) return; sMapInit = true; sMap = L.map('map').setView([-6.2, 106.8], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(sMap);
+    sMap.on('click', e => {
+      document.getElementById('eKoor').value = e.latlng.lat + "," + e.latlng.lng;
+      if(sMarker) sMap.removeLayer(sMarker); sMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(sMap);
+    });
+  }
+
+  function saveUser() {
+    let d = { id: document.getElementById('eId').value, nama: document.getElementById('eNama').value, pass: document.getElementById('ePass').value, jab: document.getElementById('eJab').value, area: document.getElementById('eArea').value, role: document.getElementById('eRole').value, koor: document.getElementById('eKoor').value };
+    if(!d.id || !d.nama) return Swal.fire('Error','ID dan Nama wajib diisi','error');
+    reqAPI({aksi: "saveUser", data: d}, res => { if(res.status==="success") { Swal.fire('Tersimpan','','success'); loadAdminData(); } });
+  }
+
   function loadBypassMap() {
-    if(bMapInit) return; bMapInit = true; bMap = L.map('saMap').setView([-6.2, 106.8], 13);
+    if(bMapInit) return; bMapInit = true; bMap = L.map('saMap').setView([-6.2, 106.8], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(bMap);
     bMap.on('click', e => {
       document.getElementById('saKoor').value = e.latlng.lat + "," + e.latlng.lng;
@@ -286,11 +443,12 @@
 
   function kirimBypass() {
     let sn = document.getElementById('saStaff').value, sj = document.getElementById('saJenis').value, sk = document.getElementById('saKoor').value, sw = document.getElementById('saWaktu').value;
+    if(!sn || !sk) return Swal.fire('Error','Lengkapi data staf dan klik peta untuk lokasi','error');
     let st = staffList.find(x => x.nama === sn), w = sw ? new Date(sw) : new Date();
     let cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = 600; cv.height = 400;
-    cx.fillStyle = "#1f2937"; cx.fillRect(0,0,600,400); cx.fillStyle = "#fff"; cx.font = "bold 24px Inter"; cx.fillText("BYPASS", 30, 60); cx.font = "20px Inter"; cx.fillText("Waktu: " + w.toLocaleString('id-ID'), 30, 100);
+    cx.fillStyle = "#1f2937"; cx.fillRect(0,0,600,400); cx.fillStyle = "#fff"; cx.font = "bold 24px Inter"; cx.fillText("BYPASS SYSTEM", 30, 60); cx.font = "20px Inter"; cx.fillText("Waktu: " + w.toLocaleString('id-ID'), 30, 100);
     reqAPI({aksi: "absen", data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.8), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
-      if(res.status==="success") { Swal.fire('Sukses','','success'); document.getElementById('saStaff').value = ""; }
+      if(res.status==="success") { Swal.fire('Sukses','Data berhasil disuntik','success'); document.getElementById('saStaff').value = ""; }
     });
   }
 
