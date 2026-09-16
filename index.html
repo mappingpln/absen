@@ -100,7 +100,7 @@
       </div>
       
       <hr>
-      <span class="lbl">Grafik Kehadiran (Klik batang kosong untuk isi absen)</span>
+      <span class="lbl">Grafik Kehadiran</span>
       <canvas id="cUserBulan" style="margin-bottom:15px; max-height:200px;"></canvas>
 
       <hr>
@@ -239,8 +239,9 @@
         localStorage.setItem('hris_cred', JSON.stringify({u:u, p:p}));
         uData = res; uData.u = u;
         if(res.setting && res.setting.logo) applyLogo(res.setting.logo);
-        if (res.isFirst === true || res.isFirst === "TRUE") show('first-view');
-        else if (res.role === "admin" || res.role === "superadmin") { 
+        if (res.isFirst === true || res.isFirst === "TRUE") {
+          show('first-view');
+        } else if (res.role === "admin" || res.role === "superadmin") { 
           show('admin-view'); 
           document.getElementById('aLock').value = res.setting.lock.toString();
           document.getElementById('aLogo').value = res.setting.logo;
@@ -344,7 +345,12 @@
   function doGantiPass() {
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "gantiPass", user: uData.u, passBaru: document.getElementById('newPass').value}, res => {
-      if(res.status==="success") { Swal.fire('Berhasil','Silakan login ulang','success').then(()=>doExit()); }
+      if(res.status==="success") { 
+        Swal.fire('Berhasil','Silakan login dengan sandi baru','success').then(() => {
+          localStorage.removeItem('hris_cred');
+          location.reload(); 
+        }); 
+      }
     });
   }
 
