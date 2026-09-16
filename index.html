@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Portal Absensi</title>
-  <link rel="manifest" href="file:///D|/ISI OTOMATIS/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root { --bg: #f8fafc; --main: #0ea5e9; --main-hover: #0284c7; --card: #ffffff; --text: #334155; --text-light: #64748b; --border: #e2e8f0; }
@@ -36,9 +35,6 @@
     .clock-box { text-align: center; margin-bottom: 20px; padding: 15px; background: #f1f5f9; border-radius: 10px; }
     .clock-time { font-size: 28px; font-weight: 700; color: var(--main); }
     .clock-date { font-size: 14px; color: var(--text-light); margin-top: 5px; }
-    .top-icons { text-align: center; margin-top: 20px; font-size: 24px; }
-    .top-icons a { margin: 0 12px; color: var(--text-light); transition: color 0.2s; }
-    .top-icons a:hover { color: var(--main); }
     video, canvas { width: 100%; border-radius: 10px; }
     hr { border: 0; height: 1px; background: var(--border); margin: 20px 0; }
     .lbl { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-light); }
@@ -80,7 +76,7 @@
         <div id="cDate" class="clock-date">Memuat...</div>
       </div>
       
-      <button id="btnInstall" class="btn btn-out hidden" style="border-color:#10b981; color:#10b981;" onclick="installApp()"><i class="fa-solid fa-download"></i> Install Aplikasi</button>
+      <button id="btnInstall" class="btn btn-out hidden" style="border-color:#10b981; color:#10b981;" onclick="installApp()"><i class="fa-solid fa-download"></i> Install PWA</button>
       
       <div id="boxHariLibur" class="hidden" style="background:#ef4444; color:#fff; padding:12px; border-radius:10px; text-align:center; margin-bottom:15px; font-weight:600;">
         HARI LIBUR
@@ -169,6 +165,8 @@
 </div>
 
 <script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
   const API_URL = "https://script.google.com/macros/s/AKfycbztoJ15wHaBBo5O7ImZWbF7SmlPH-czhxed6K8C9eKnQWVN8r08Y9xfItNFxrpZfNdn/exec";
   let uData = {}, jAbsen = "", ketTmp = "", stream = null;
   let sMapInit = false, bMapInit = false, sMap = null, bMap = null, sMarker = null, bMarker = null;
@@ -181,10 +179,16 @@
     return d;
   }
   function getUa() { let m = navigator.userAgent.match(/\((.*?)\)/); return m ? m[1] : "Unknown"; }
+  function getJarak(lat1, lon1, lat2, lon2) {
+    let p = Math.PI/180;
+    let a = Math.sin((lat2-lat1)*p/2)**2 + Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin((lon2-lon1)*p/2)**2;
+    return 6371e3 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
   function reqAPI(body, cb) {
-    Swal.fire({title: 'Memproses...', allowOutsideClick: false, showConfirmButton:false}); Swal.showLoading();
     fetch(API_URL, { method: 'POST', redirect: 'follow', headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body) })
-    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => Swal.fire('Error', 'Gangguan koneksi internet', 'error'));
+    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => {
+       Swal.fire('Error', 'Gagal memproses data.', 'error');
+    });
   }
   function show(id) { document.querySelectorAll('.app-container > div').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
   function togglePass() {
@@ -202,6 +206,7 @@
 
   function doLogin() {
     let u = document.getElementById('user').value, p = document.getElementById('pass').value;
+    Swal.fire({title: 'Memeriksa Kredensial...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "login", user: u, pass: p, deviceId: getDid()}, res => {
       if (res.status === "success") {
         uData = res; uData.u = u;
@@ -254,9 +259,7 @@
       if(uData.ctx.masukToday) {
         bM.innerText = "Edit Absen Masuk"; bM.className = "btn btn-orange";
         bP.disabled = false;
-      } else {
-        bP.disabled = true;
-      }
+      } else { bP.disabled = true; }
       if(uData.ctx.pulangToday) {
         bP.innerText = "Edit Absen Pulang"; bP.className = "btn btn-orange";
       }
@@ -267,12 +270,12 @@
   async function tryMasuk() {
     ketTmp = "";
     if (uData.ctx.missedPulang) {
-      const {value: k1} = await Swal.fire({title: 'Lupa Pulang', text: 'Kemarin Anda belum absen pulang. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      const {value: k1} = await Swal.fire({title: 'Lupa Pulang', text: 'Kemarin Anda belum absen pulang. Alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
       if(!k1) return; ketTmp += "[Lupa Pulang: " + k1 + "] ";
     }
     let h = new Date().getHours();
     if (h >= 9 && !uData.ctx.masukToday) {
-      const {value: k2} = await Swal.fire({title: 'Terlambat Masuk', text: 'Sudah lewat jam 09:00. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      const {value: k2} = await Swal.fire({title: 'Terlambat Masuk', text: 'Sudah lewat jam 09:00. Alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
       if(!k2) return; ketTmp += "[Telat: " + k2 + "] ";
     }
     bukaKamera('Masuk');
@@ -285,13 +288,14 @@
     if (1 <= d && d <= 4 && h < 16) awal = true;
     if (d === 5 && (h < 16 || (h === 16 && m < 30))) awal = true;
     if (awal && !uData.ctx.pulangToday) {
-      const {value: k1} = await Swal.fire({title: 'Pulang Awal', text: 'Belum waktunya pulang. Beri alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
+      const {value: k1} = await Swal.fire({title: 'Pulang Awal', text: 'Belum waktunya pulang. Alasan:', input: 'text', inputValidator: v => !v && 'Wajib diisi!'});
       if(!k1) return; ketTmp += "[Pulang Awal: " + k1 + "] ";
     }
     bukaKamera('Pulang');
   }
 
   function doGantiPass() {
+    Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "gantiPass", user: uData.u, passBaru: document.getElementById('newPass').value}, res => {
       if(res.status==="success") { Swal.fire('Berhasil','Silakan login ulang','success').then(()=>doExit()); }
     });
@@ -307,22 +311,28 @@
 
   function jepret() {
     document.getElementById('btnJepret').disabled = true;
+    
+    let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
+    c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0, c.width, c.height);
+    let b64 = c.toDataURL("image/jpeg", 0.7); 
+    tutupKamera();
+
+    Swal.fire({title: 'Melacak GPS & Mengirim...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+
     navigator.geolocation.getCurrentPosition(p => {
       let lat = p.coords.latitude, lng = p.coords.longitude;
-      let jar = 6371e3 * 2 * Math.atan2(Math.sqrt(Math.sin((lat-uData.koordinat.lat)*Math.PI/360)**2 + Math.cos(uData.koordinat.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-uData.koordinat.lng)*Math.PI/360)**2), Math.sqrt(1-(Math.sin((lat-uData.koordinat.lat)*Math.PI/360)**2 + Math.cos(uData.koordinat.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-uData.koordinat.lng)*Math.PI/360)**2)));
-      let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
-      c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0, c.width, c.height);
-      let b64 = c.toDataURL("image/jpeg", 0.7); tutupKamera();
+      let jar = getJarak(uData.koordinat.lat, uData.koordinat.lng, lat, lng);
+      
       reqAPI({aksi: "absen", data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
         if(res.status==="success") Swal.fire('Berhasil','Data tersimpan','success').then(()=>doExit());
       });
     }, err => {
-      Swal.fire('GPS Gagal', 'Aktifkan GPS perangkat Anda!', 'error');
-      document.getElementById('btnJepret').disabled = false; tutupKamera();
+      Swal.fire('GPS Gagal', 'Pastikan GPS perangkat Anda aktif dan diizinkan!', 'error');
     }, {enableHighAccuracy: true, timeout: 15000});
   }
 
   function kirimIzin() {
+    Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "izin", data: {nama: uData.nama, ket: document.getElementById('ketIzin').value, area: uData.area, perangkat: getUa()}}, res => {
       if(res.status==="success") Swal.fire('Berhasil','Data izin tersimpan','success').then(()=>doExit());
     });
@@ -331,6 +341,7 @@
   function cetakAbsen() {
     let bln = document.getElementById('blnCetak').value;
     if(!bln) return Swal.fire('Error','Pilih bulan terlebih dahulu','error');
+    Swal.fire({title: 'Memproses Laporan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "cetak", user: uData.nama, bulan: bln}, res => {
       let lib = res.set.libur;
       let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:15mm;} body{font-family:sans-serif;} table{width:100%; border-collapse:collapse; margin-top:20px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #000; padding:8px; text-align:center;} .h{background:#ef4444; color:#fff; -webkit-print-color-adjust: exact;}</style></head><body>`;
@@ -357,6 +368,7 @@
   }
 
   function saveSet() {
+    Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "saveSet", data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value}}, res => {
       if(res.status==="success") { Swal.fire('Tersimpan','','success'); applyLogo(document.getElementById('aLogo').value); }
     });
@@ -364,12 +376,14 @@
   
   function addLibur() { 
     if(!document.getElementById('aLibur').value) return;
+    Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "addLibur", tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); 
   }
   
   function resetAkun() {
     let id = document.getElementById('rUser').value;
     if(!id) return Swal.fire('Error','Pilih akun!','error');
+    Swal.fire({title: 'Mereset...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "resetUser", id: id}, res => { if(res.status==="success") Swal.fire('Berhasil','Sandi dan HP direset','success'); });
   }
 
@@ -401,8 +415,7 @@
     if(!id) {
       document.getElementById('eId').value = ""; document.getElementById('eNama').value = ""; document.getElementById('ePass').value = "123456";
       document.getElementById('eJab').value = ""; document.getElementById('eArea').value = ""; document.getElementById('eRole').value = "staff"; document.getElementById('eKoor').value = "";
-      if(sMarker) sMap.removeLayer(sMarker);
-      return;
+      if(sMarker) sMap.removeLayer(sMarker); return;
     }
     let d = allUsers.find(x => x.id === id);
     if(d) {
@@ -429,6 +442,7 @@
   function saveUser() {
     let d = { id: document.getElementById('eId').value, nama: document.getElementById('eNama').value, pass: document.getElementById('ePass').value, jab: document.getElementById('eJab').value, area: document.getElementById('eArea').value, role: document.getElementById('eRole').value, koor: document.getElementById('eKoor').value };
     if(!d.id || !d.nama) return Swal.fire('Error','ID dan Nama wajib diisi','error');
+    Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "saveUser", data: d}, res => { if(res.status==="success") { Swal.fire('Tersimpan','','success'); loadAdminData(); } });
   }
 
@@ -447,6 +461,7 @@
     let st = staffList.find(x => x.nama === sn), w = sw ? new Date(sw) : new Date();
     let cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = 600; cv.height = 400;
     cx.fillStyle = "#1f2937"; cx.fillRect(0,0,600,400); cx.fillStyle = "#fff"; cx.font = "bold 24px Inter"; cx.fillText("BYPASS SYSTEM", 30, 60); cx.font = "20px Inter"; cx.fillText("Waktu: " + w.toLocaleString('id-ID'), 30, 100);
+    Swal.fire({title: 'Menyuntik Data...', didOpen: () => {Swal.showLoading()}});
     reqAPI({aksi: "absen", data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.8), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
       if(res.status==="success") { Swal.fire('Sukses','Data berhasil disuntik','success'); document.getElementById('saStaff').value = ""; }
     });
@@ -455,7 +470,7 @@
   let defP;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); defP = e; document.getElementById('btnInstall').classList.remove('hidden'); });
   function installApp() {
-    if (!defP) return Swal.fire('Info', 'Gunakan menu Share -> Add to Home Screen', 'info');
+    if (!defP) return Swal.fire('Info', 'Gunakan menu browser -> Add to Home Screen', 'info');
     defP.prompt(); defP.userChoice.then(c => { if (c.outcome === 'accepted') document.getElementById('btnInstall').classList.add('hidden'); defP = null; });
   }
   window.addEventListener('appinstalled', () => { document.getElementById('btnInstall').classList.add('hidden'); });
