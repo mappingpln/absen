@@ -3,295 +3,304 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Portal Absensi Mapping</title>
+  <title>HRIS Absensi</title>
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    :root { --primary: #2563eb; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --muted: #6b7280; }
+    :root { --bg: #f3f4f6; --main: #2563eb; --card: #fff; --text: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; }
-    #app-container { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); position: relative; overflow-x: hidden; }
+    body { background: var(--bg); display: flex; justify-content: center; }
+    .app-container { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); position: relative; }
     .hidden { display: none !important; }
-    .card { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    h2 { font-weight: 700; font-size: 24px; margin-bottom: 10px; color: var(--primary); }
-    h3 { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-    .form-group { margin-bottom: 15px; text-align: left; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--muted); }
-    .form-control { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; }
-    .form-control:focus { border-color: var(--primary); }
-    .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; color: white; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .btn-primary { background: var(--primary); }
-    .btn-success { background: var(--success); }
-    .btn-danger { background: var(--danger); }
-    .header { background: var(--primary); color: white; padding: 20px 15px 40px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .btn-logout { background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; }
-    .profile-card { margin-top: -30px; position: relative; z-index: 10; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .info-box { background: #f9fafb; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #eee; font-size: 13px; }
-    .info-box span { display: block; font-weight: 700; font-size: 14px; color: var(--primary); margin-top: 4px; }
-    #areaKamera { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 15px; }
-    video, canvas { width: 100%; border-radius: 12px; max-height: 70vh; object-fit: cover; background: #222; }
-    .history-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; align-items: center; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: white; }
-    .badge.Masuk { background: var(--success); }
-    .badge.Pulang { background: var(--primary); }
-    .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .card { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .form-control { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; color: #fff; cursor: pointer; margin-bottom: 10px; }
+    .btn-main { background: var(--main); }
+    .btn-green { background: #10b981; }
+    .btn-red { background: #ef4444; }
+    .btn-out { background: transparent; border: 1px solid var(--main); color: var(--main); }
+    .map-box { height: 250px; width: 100%; border-radius: 8px; margin-bottom: 10px; }
+    video, canvas { width: 100%; border-radius: 8px; }
   </style>
 </head>
 <body>
-
-<div id="app-container">
-  <div id="loader" class="loader-overlay hidden">
-    <div class="spinner"></div>
-    <p style="font-weight: 600; color: var(--muted);" id="loader-text">Memproses...</p>
+<div class="app-container">
+  <div id="login-view" class="card" style="margin-top: 50px;">
+    <h2 style="text-align:center; color:var(--main); margin-bottom:20px;">Portal Absensi</h2>
+    <input type="text" id="user" class="form-control" placeholder="Username / ID">
+    <div style="position: relative;">
+      <input type="password" id="pass" class="form-control" placeholder="Password">
+      <i class="fa-solid fa-eye" id="eye" onclick="togglePass()" style="position: absolute; right: 15px; top: 12px; cursor: pointer; color:#666;"></i>
+    </div>
+    <button class="btn btn-main" onclick="doLogin()">Masuk</button>
   </div>
 
-  <div id="login-view">
-    <div class="card" style="margin-top: 60px; text-align: center;">
-      <i class="fa-solid fa-location-crosshairs" style="font-size: 50px; color: var(--primary); margin-bottom: 15px;"></i>
-      <h2>Portal Absensi</h2>
-      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Silakan masuk untuk absen</p>
+  <div id="first-view" class="card hidden" style="margin-top: 50px;">
+    <h2>Ganti Password Wajib</h2>
+    <input type="password" id="newPass" class="form-control" placeholder="Password Baru">
+    <button class="btn btn-green" onclick="doGantiPass()">Simpan</button>
+  </div>
 
-      <div class="form-group">
-        <label>ID / Username</label>
-        <input type="text" id="username" class="form-control" placeholder="Masukkan ID">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" class="form-control" placeholder="Masukkan password">
+  <div id="staff-view" class="hidden">
+    <div class="card">
+      <button id="btnInstall" class="btn btn-out hidden" style="border-color:#10b981; color:#10b981;" onclick="installApp()"><i class="fa-solid fa-download"></i> Jadikan Aplikasi</button>
+      <h2 id="sNama"></h2>
+      <p id="sArea" style="font-size:12px; color:#666; margin-bottom:15px;"></p>
+      
+      <div id="boxHariLibur" class="hidden" style="background:#ef4444; color:#fff; padding:10px; border-radius:8px; text-align:center; margin-bottom:15px;">
+        HARI LIBUR
       </div>
       
-      <button class="btn btn-primary" onclick="prosesLogin()"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+      <div id="boxAbsen">
+        <button class="btn btn-green" id="btnMasuk" onclick="tryMasuk()">Absen Masuk</button>
+        <button class="btn btn-main" id="btnPulang" onclick="tryPulang()">Absen Pulang</button>
+      </div>
+
+      <button class="btn btn-out" onclick="document.getElementById('izinBox').classList.toggle('hidden')">Izin</button>
+      <div id="izinBox" class="hidden" style="margin-top:10px;">
+        <textarea id="ketIzin" class="form-control" maxlength="255" placeholder="Keterangan maks 255 huruf"></textarea>
+        <button class="btn btn-main" onclick="kirimIzin()">Kirim Izin</button>
+      </div>
+      
+      <hr style="margin:15px 0;">
+      <input type="month" id="blnCetak" class="form-control">
+      <button class="btn btn-out" onclick="cetakAbsen()">Cetak Bulanan</button>
     </div>
   </div>
 
-  <div id="dashboard-view" class="hidden">
-    <div class="header">
-      <div class="header-top">
-        <div style="font-weight: 700; font-size: 18px;"><i class="fa-solid fa-clock"></i> AbsensiKu</div>
-        <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
-      </div>
-      <div style="font-size: 14px; opacity: 0.9;" id="waktu-live">Memuat waktu...</div>
-    </div>
-
-    <div class="card profile-card">
-      <h2 style="font-size: 18px;">Halo, <span id="lblNama"></span>! 👋</h2>
-      <p style="font-size: 13px; color: var(--muted);"><i class="fa-solid fa-building"></i> <span id="lblArea"></span></p>
-      <div class="info-grid">
-        <div class="info-box">Jabatan<span id="lblJabatan"></span></div>
-        <div class="info-box">Jarak ke Kantor<span id="lblJarakSekarang">Menghitung...</span></div>
-      </div>
-    </div>
-
+  <div id="admin-view" class="hidden">
     <div class="card">
-      <h3><i class="fa-solid fa-camera-retro"></i> Rekam Kehadiran</h3>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn btn-success" onclick="bukaKamera('Masuk')">Masuk</button>
-        <button class="btn btn-primary" onclick="bukaKamera('Pulang')">Pulang</button>
-      </div>
+      <h2>Panel Admin</h2>
+      <select id="aLock" class="form-control"><option value="true">Lock Device ID: ON</option><option value="false">Lock Device ID: OFF</option></select>
+      <textarea id="aHead" class="form-control" placeholder="HTML Header Cetak"></textarea>
+      <textarea id="aFoot" class="form-control" placeholder="HTML Footer Cetak"></textarea>
+      <button class="btn btn-green" onclick="saveSet()">Simpan Pengaturan</button>
+      
+      <hr style="margin:15px 0;">
+      <input type="date" id="aLibur" class="form-control">
+      <button class="btn btn-out" onclick="addLibur()">Tambah Hari Libur</button>
+      
+      <hr style="margin:15px 0;">
+      <select id="rStaff" class="form-control"></select>
+      <button class="btn btn-red" onclick="resetKunci()">Buka Kunci HP</button>
+      <button class="btn btn-out" onclick="resetKunci('ALL')" style="color:red; border-color:red;">Reset Semua Sandi & HP</button>
     </div>
-
-    <div class="card">
-      <h3><i class="fa-solid fa-list"></i> Riwayat Absensi</h3>
-      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <input type="date" id="tglMulai" class="form-control" style="padding: 8px;">
-        <input type="date" id="tglSelesai" class="form-control" style="padding: 8px;">
-        <button class="btn btn-primary" style="width: auto; margin: 0; padding: 8px 15px;" onclick="muatRiwayat()">Cari</button>
-      </div>
-      <div id="riwayatContainer" style="font-size: 13px; color: var(--muted); text-align: center;">Memuat data...</div>
+    <div class="card hidden" id="sa-box">
+      <h3 style="color:#ef4444;">Bypass Absen Superadmin</h3>
+      <select id="saStaff" class="form-control"></select>
+      <select id="saJenis" class="form-control"><option value="Masuk">Masuk</option><option value="Pulang">Pulang</option></select>
+      <input type="datetime-local" id="saWaktu" class="form-control">
+      <div id="saMap" class="map-box"></div>
+      <input type="text" id="saKoor" class="form-control" readonly placeholder="Klik peta">
+      <button class="btn btn-red" onclick="kirimBypass()">Kirim Bypass</button>
     </div>
   </div>
 
-  <div id="areaKamera" class="hidden">
-    <h3 style="color:white; text-align:center; border:none;" id="judulKamera">Ambil Foto</h3>
+  <div id="cam-view" class="card hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:99; margin:0; border-radius:0;">
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" class="hidden"></canvas>
-    
-    <div style="margin-top: 20px;">
-      <button class="btn btn-success" onclick="jepretDanKirim()" id="btnJepret"><i class="fa-solid fa-camera"></i> Jepret & Kirim</button>
-      <button class="btn btn-danger" onclick="tutupKamera()"><i class="fa-solid fa-xmark"></i> Batal</button>
-    </div>
+    <button class="btn btn-green" id="btnJepret" onclick="jepret()">Jepret</button>
+    <button class="btn btn-red" onclick="tutupKamera()">Batal</button>
   </div>
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbztoJ15wHaBBo5O7ImZWbF7SmlPH-czhxed6K8C9eKnQWVN8r08Y9xfItNFxrpZfNdn/exec"; 
+  const API_URL = "https://script.google.com/macros/s/AKfycbztoJ15wHaBBo5O7ImZWbF7SmlPH-czhxed6K8C9eKnQWVN8r08Y9xfItNFxrpZfNdn/exec";
+  let uData = {};
+  let jAbsen = "", ketTmp = "";
+  let stream = null, bMapInit = false, bMap = null, bMarker = null, staffList = [];
 
-  let dataUser = {};
-  let jenisAbsenAktif = "";
-  let streamKamera = null;
-  let intervalWaktu = null;
+  function getDid() {
+    let d = localStorage.getItem("hris_did");
+    if (!d) { d = "dev_" + Math.random().toString(36).substring(2, 10); localStorage.setItem("hris_did", d); }
+    return d;
+  }
+  function getUa() { let m = navigator.userAgent.match(/\((.*?)\)/); return m ? m[1] : "Unknown"; }
+  function reqAPI(body, cb) {
+    Swal.fire({title: 'Memproses...', allowOutsideClick: false}); Swal.showLoading();
+    fetch(API_URL, { method: 'POST', redirect: 'follow', headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body) })
+    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => Swal.fire('Error', 'Gagal', 'error'));
+  }
+  function show(id) { document.querySelectorAll('.app-container > div').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+  function togglePass() {
+    let p = document.getElementById('pass'); let i = document.getElementById('eye');
+    p.type = p.type === "password" ? "text" : "password"; i.className = p.type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+  }
+  function full() { let d = document.documentElement; if (d.requestFullscreen) d.requestFullscreen().catch(()=>{}); }
 
-  function showLoader(txt) { document.getElementById('loader-text').innerText = txt; document.getElementById('loader').classList.remove('hidden'); }
-  function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+  function doLogin() {
+    let u = document.getElementById('user').value, p = document.getElementById('pass').value;
+    reqAPI({aksi: "login", user: u, pass: p, deviceId: getDid()}, res => {
+      if (res.status === "success") {
+        uData = res; uData.u = u; full();
+        if (res.isFirst === true || res.isFirst === "TRUE") show('first-view');
+        else if (res.role === "admin" || res.role === "superadmin") { 
+          show('admin-view'); 
+          document.getElementById('aLock').value = res.setting.lock.toString();
+          document.getElementById('aHead').value = res.setting.header;
+          document.getElementById('aFoot').value = res.setting.footer;
+          loadAdminData();
+          if(res.role === "superadmin") { document.getElementById('sa-box').classList.remove('hidden'); loadBypassMap(); }
+        } else { 
+          show('staff-view'); 
+          document.getElementById('sNama').innerText = res.nama; document.getElementById('sArea').innerText = res.area;
+          setupRules();
+        }
+      } else Swal.fire('Gagal', res.msg, 'error');
+    });
+  }
 
-  function prosesLogin() {
-    let u = document.getElementById('username').value;
-    let p = document.getElementById('password').value;
-    if(!u || !p) return Swal.fire("Peringatan", "Isi Username & Password!", "warning");
-
-    showLoader("Memverifikasi...");
+  function setupRules() {
+    let now = new Date();
+    let day = now.getDay();
+    let tglStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
     
-    fetch(API_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ aksi: "login", username: u, password: p })
-    })
-    .then(res => res.json())
-    .then(res => {
-      hideLoader();
-      if(res.status === "success") {
-        dataUser = res;
-        masukDashboard();
-      } else {
-        Swal.fire("Gagal", res.pesan || "Data tidak ditemukan.", "error");
-      }
-    })
-    .catch(err => { hideLoader(); Swal.fire("Error", "Gagal menghubungi server.", "error"); });
-  }
-
-  function masukDashboard() {
-    document.getElementById('login-view').classList.add('hidden');
-    document.getElementById('dashboard-view').classList.remove('hidden');
+    let isLibur = day === 0 || day === 6 || uData.setting.libur.includes(tglStr);
     
-    document.getElementById('lblNama').innerText = dataUser.nama;
-    document.getElementById('lblJabatan').innerText = dataUser.jabatan;
-    document.getElementById('lblArea').innerText = dataUser.area;
-
-    let today = new Date();
-    let lastWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-    document.getElementById('tglSelesai').value = today.toISOString().split('T')[0];
-    document.getElementById('tglMulai').value = lastWeek.toISOString().split('T')[0];
-
-    intervalWaktu = setInterval(() => {
-      document.getElementById('waktu-live').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' });
-    }, 1000);
-
-    pantauJarak();
-    muatRiwayat();
+    if (isLibur) {
+      document.getElementById('boxHariLibur').classList.remove('hidden');
+      document.getElementById('boxAbsen').classList.add('hidden');
+    } else {
+      if(uData.ctx.masukToday) document.getElementById('btnMasuk').disabled = true;
+      else document.getElementById('btnPulang').disabled = true;
+    }
   }
 
-  function logout() {
-    document.getElementById('login-view').classList.remove('hidden');
-    document.getElementById('dashboard-view').classList.add('hidden');
-    document.getElementById('password').value = "";
-    clearInterval(intervalWaktu);
+  async function tryMasuk() {
+    ketTmp = "";
+    if (uData.ctx.missedPulang) {
+      const {value: k1} = await Swal.fire({title: 'Lupa Pulang', text: 'Kemarin Anda tidak klik pulang. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k1) return; ketTmp += "[Kemarin Lupa Pulang: " + k1 + "] ";
+    }
+    let h = new Date().getHours();
+    if (h >= 9) {
+      const {value: k2} = await Swal.fire({title: 'Terlambat Masuk', text: 'Sudah lewat jam 09:00. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k2) return; ketTmp += "[Telat Masuk: " + k2 + "] ";
+    }
+    bukaKamera('Masuk');
   }
 
-  function bukaKamera(jenis) {
-    jenisAbsenAktif = jenis;
-    document.getElementById('judulKamera').innerText = "Absen " + jenis;
-    document.getElementById('areaKamera').classList.remove('hidden');
-    document.getElementById('btnJepret').disabled = false;
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-      .then(stream => { streamKamera = stream; document.getElementById('video').srcObject = stream; })
-      .catch(err => { tutupKamera(); Swal.fire("Error", "Gagal akses kamera.", "error"); });
+  async function tryPulang() {
+    ketTmp = "";
+    let now = new Date(), d = now.getDay(), h = now.getHours(), m = now.getMinutes();
+    let awal = false;
+    if (1 <= d && d <= 4 && h < 16) awal = true;
+    if (d === 5 && (h < 16 || (h === 16 && m < 30))) awal = true;
+    
+    if (awal) {
+      const {value: k1} = await Swal.fire({title: 'Pulang Cepat', text: 'Belum waktunya pulang. Alasan?', input: 'textarea', inputValidator: v => !v && 'Wajib diisi!'});
+      if(!k1) return; ketTmp += "[Pulang Cepat: " + k1 + "] ";
+    }
+    bukaKamera('Pulang');
   }
 
-  function tutupKamera() {
-    document.getElementById('areaKamera').classList.add('hidden');
-    if (streamKamera) streamKamera.getTracks().forEach(track => track.stop());
+  function doGantiPass() {
+    reqAPI({aksi: "gantiPass", user: uData.u, passBaru: document.getElementById('newPass').value}, res => {
+      if(res.status==="success") { Swal.fire('Berhasil','Silakan login','success'); show('login-view'); }
+    });
   }
 
-  function jepretDanKirim() {
+  function bukaKamera(j) {
+    jAbsen = j; show('cam-view'); document.getElementById('btnJepret').disabled = false;
+    navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}}).then(s => { stream = s; document.getElementById('video').srcObject = s; });
+  }
+
+  function tutupKamera() { show('staff-view'); if(stream) stream.getTracks().forEach(t => t.stop()); }
+
+  function jepret() {
     document.getElementById('btnJepret').disabled = true;
-    showLoader("Mendapatkan Lokasi...");
+    navigator.geolocation.getCurrentPosition(p => {
+      let lat = p.coords.latitude, lng = p.coords.longitude;
+      let jar = 6371e3 * 2 * Math.atan2(Math.sqrt(Math.sin((lat-uData.koordinat.lat)*Math.PI/360)**2 + Math.cos(uData.koordinat.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-uData.koordinat.lng)*Math.PI/360)**2), Math.sqrt(1-(Math.sin((lat-uData.koordinat.lat)*Math.PI/360)**2 + Math.cos(uData.koordinat.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin((lng-uData.koordinat.lng)*Math.PI/360)**2)));
+      let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
+      c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0, c.width, c.height);
+      let b64 = c.toDataURL("image/jpeg", 0.7); tutupKamera();
+      reqAPI({aksi: "absen", data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
+        if(res.status==="success") Swal.fire('Berhasil','','success').then(()=>location.reload());
+      });
+    }, ()=> tutupKamera(), {enableHighAccuracy: true});
+  }
 
-    navigator.geolocation.getCurrentPosition(posisi => {
-      let lat = posisi.coords.latitude;
-      let lng = posisi.coords.longitude;
-      let jarakM = hitungJarak(dataUser.koordinatKantor.lat, dataUser.koordinatKantor.lng, lat, lng);
-      
-      if (jarakM > 1000) {
-        hideLoader(); tutupKamera();
-        return Swal.fire("Gagal", `Anda di luar jangkauan! Jarak: ${Math.round(jarakM)}m (Max 1000m)`, "warning");
+  function kirimIzin() {
+    reqAPI({aksi: "izin", data: {nama: uData.nama, ket: document.getElementById('ketIzin').value, area: uData.area, perangkat: getUa()}}, res => {
+      if(res.status==="success") Swal.fire('Berhasil','','success');
+    });
+  }
+
+  function cetakAbsen() {
+    let bln = document.getElementById('blnCetak').value;
+    if(!bln) return Swal.fire('Error','Pilih bulan','error');
+    reqAPI({aksi: "cetak", user: uData.nama, bulan: bln}, res => {
+      let lib = res.set.libur;
+      let html = `<html><head><title>Cetak Absen</title><style>@page{size:A4; margin:15mm;} body{font-family:sans-serif;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #000; padding:8px; text-align:center;} .h{background:#ef4444; color:#fff;}</style></head><body>`;
+      html += `<div>${res.set.header}</div><h2 style="text-align:center;">Data Absensi ${uData.nama} (${bln})</h2><table><tr><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
+      let y = parseInt(bln.split('-')[0]), m = parseInt(bln.split('-')[1]);
+      let maxD = new Date(y, m, 0).getDate();
+      for(let i=1; i<=maxD; i++) {
+        let tStr = y + "-" + String(m).padStart(2,'0') + "-" + String(i).padStart(2,'0');
+        let d = new Date(tStr).getDay();
+        let isL = d===0 || d===6 || lib.includes(tStr);
+        let msk = res.data.find(x => x.tgl === tStr && x.jenis === "Masuk");
+        let plg = res.data.find(x => x.tgl === tStr && x.jenis === "Pulang");
+        html += `<tr class="${isL?'h':''}"><td style="text-align:left;">${tStr}</td><td>${msk?msk.wkt:'-'}</td><td>${plg?plg.wkt:'-'}</td><td style="font-size:12px;">${msk?msk.ket:''}<br>${plg?plg.ket:''}</td></tr>`;
       }
-
-      showLoader("Memproses Foto...");
-      let video = document.getElementById('video');
-      let canvas = document.getElementById('canvas');
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      let ctx = canvas.getContext('2d');
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-      ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
-      ctx.font = "16px Inter"; ctx.fillStyle = "#fff";
-      ctx.fillText(`Nama: ${dataUser.nama} (${jenisAbsenAktif})`, 10, canvas.height - 55);
-      ctx.fillText(`Lokasi: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, 10, canvas.height - 35);
-      ctx.fillText(`Waktu: ${new Date().toLocaleString('id-ID')}`, 10, canvas.height - 15);
-
-      let fotoB64 = canvas.toDataURL("image/jpeg", 0.7);
-      tutupKamera();
-
-      let payloadData = { nama: dataUser.nama, jenisAbsen: jenisAbsenAktif, lokasiGPS: `${lat}, ${lng}`, jarak: Math.round(jarakM), fotoBase64: fotoB64 };
-      kirimKeServer(payloadData);
-    }, err => { hideLoader(); tutupKamera(); Swal.fire("Error GPS", "Aktifkan GPS Anda.", "error"); }, { enableHighAccuracy: true });
+      html += `</table><div style="margin-top:30px;">${res.set.footer}</div></body></html>`;
+      let w = window.open('','_blank'); w.document.write(html); w.document.close();
+      setTimeout(()=> w.print(), 800);
+    });
   }
 
-  function kirimKeServer(payloadData) {
-    fetch(API_URL, {
-      method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ aksi: "absen", payload: payloadData })
-    })
-    .then(res => res.json())
-    .then(res => {
-      hideLoader();
-      if(res.status === "success") { Swal.fire("Berhasil", res.pesan, "success"); muatRiwayat(); } 
-      else { Swal.fire("Gagal", res.pesan, "error"); }
-    }).catch(err => { hideLoader(); Swal.fire("Error", "Gagal mengirim data.", "error"); });
+  function saveSet() {
+    reqAPI({aksi: "saveSet", data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value}}, res => {
+      if(res.status==="success") Swal.fire('Tersimpan','','success');
+    });
+  }
+  function addLibur() { reqAPI({aksi: "addLibur", tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); }
+  function resetKunci(n) {
+    let t = n === 'ALL' ? 'ALL' : document.getElementById('rStaff').value;
+    reqAPI({aksi: "resetDevice", nama: t}, res => { if(res.status==="success") Swal.fire('Berhasil','','success'); });
   }
 
-  function muatRiwayat() {
-    document.getElementById('riwayatContainer').innerHTML = "Memuat data...";
-    fetch(API_URL, {
-      method: 'POST', redirect: 'follow', headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ aksi: "riwayat", username: dataUser.nama })
-    }).then(res => res.json()).then(res => {
+  function loadAdminData() {
+    reqAPI({aksi: "listStaff"}, res => {
       if(res.status === "success") {
-        let tglM = new Date(document.getElementById('tglMulai').value).setHours(0,0,0,0);
-        let tglS = new Date(document.getElementById('tglSelesai').value).setHours(23,59,59,999);
-        
-        let filtered = res.data.filter(i => { let w = new Date(i.waktu).getTime(); return w >= tglM && w <= tglS; });
-        
-        if(filtered.length === 0) { document.getElementById('riwayatContainer').innerHTML = "Tidak ada data."; return; }
-        
-        let html = "";
-        filtered.forEach(item => {
-          let tglStr = new Date(item.waktu).toLocaleString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-          html += `<div class="history-item">
-            <div><div style="font-weight:600;">${tglStr}</div><div style="color:gray; font-size:11px;">Jarak: ${item.jarak}m | <a href="${item.foto}" target="_blank">Foto</a></div></div>
-            <span class="badge ${item.jenis}">${item.jenis}</span>
-          </div>`;
-        });
-        document.getElementById('riwayatContainer').innerHTML = html;
+        staffList = res.data; let opt = '<option value="">Pilih Staff</option>';
+        res.data.forEach(s => { opt += `<option value="${s.nama}">${s.nama} (${s.area})</option>`; });
+        document.getElementById('rStaff').innerHTML = opt; document.getElementById('saStaff').innerHTML = opt;
       }
     });
   }
 
-  function hitungJarak(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; const p1 = lat1 * Math.PI/180, p2 = lat2 * Math.PI/180;
-    const dp = (lat2-lat1) * Math.PI/180, dl = (lon2-lon1) * Math.PI/180;
-    const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); 
+  function loadBypassMap() {
+    if(bMapInit) return; bMapInit = true; bMap = L.map('saMap').setView([-6.2, 106.8], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(bMap);
+    bMap.on('click', e => {
+      document.getElementById('saKoor').value = e.latlng.lat + "," + e.latlng.lng;
+      if(bMarker) bMap.removeLayer(bMarker); bMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(bMap);
+    }); setTimeout(() => bMap.invalidateSize(), 500);
   }
 
-  function pantauJarak() {
-    if(navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        let j = hitungJarak(dataUser.koordinatKantor.lat, dataUser.koordinatKantor.lng, pos.coords.latitude, pos.coords.longitude);
-        document.getElementById('lblJarakSekarang').innerText = Math.round(j) + "m";
-        if(j > 1000) document.getElementById('lblJarakSekarang').style.color = "red";
-      });
-    }
+  function kirimBypass() {
+    let sn = document.getElementById('saStaff').value, sj = document.getElementById('saJenis').value, sk = document.getElementById('saKoor').value, sw = document.getElementById('saWaktu').value;
+    let st = staffList.find(x => x.nama === sn), w = sw ? new Date(sw) : new Date();
+    let cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = 600; cv.height = 400;
+    cx.fillStyle = "#1f2937"; cx.fillRect(0,0,600,400); cx.fillStyle = "#fff"; cx.font = "bold 24px Inter"; cx.fillText("BYPASS", 30, 60); cx.font = "20px Inter"; cx.fillText("Waktu: " + w.toLocaleString('id-ID'), 30, 100);
+    reqAPI({aksi: "absen", data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.8), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
+      if(res.status==="success") { Swal.fire('Sukses','','success'); document.getElementById('saStaff').value = ""; }
+    });
   }
+
+  let defP;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); defP = e; document.getElementById('btnInstall').classList.remove('hidden'); });
+  function installApp() {
+    if (!defP) return Swal.fire('Info', 'Gunakan menu Share -> Add to Home Screen', 'info');
+    defP.prompt(); defP.userChoice.then(c => { if (c.outcome === 'accepted') document.getElementById('btnInstall').classList.add('hidden'); defP = null; });
+  }
+  window.addEventListener('appinstalled', () => { document.getElementById('btnInstall').classList.add('hidden'); });
 </script>
 </body>
 </html>
