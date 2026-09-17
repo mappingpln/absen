@@ -236,9 +236,9 @@
       Swal.fire({title: 'Memuat sesi...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
       reqAPI("cekSesi", {}, res => {
         if (res.status === "success") { uData = Object.assign(uData, res); lanjutSetelahLogin(); } 
-        else { localStorage.removeItem('hris_token'); applyLogo("https://mappingpln.github.io/absen/logo-512.png"); }
+        else { localStorage.removeItem('hris_token'); applyLogo("https://upload.wikimedia.org/wikipedia/commons/9/97/Logo_PLN.png"); }
       });
-    } else { applyLogo("https://mappingpln.github.io/absen/logo-192.png"); }
+    } else { applyLogo("https://upload.wikimedia.org/wikipedia/commons/9/97/Logo_PLN.png"); }
   };
 
   function getDid() {
