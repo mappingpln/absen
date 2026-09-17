@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0ea5e9">
   <title>Portal Absensi</title>
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +57,7 @@
       <input type="password" id="pass" class="form-control" placeholder="Password">
       <i class="fa-solid fa-eye" id="eye" onclick="togglePass()" style="position: absolute; right: 15px; top: 14px; cursor: pointer; color:var(--text-light);"></i>
     </div>
-    <button class="btn btn-main" onclick="doLogin(false)">Masuk</button>
+    <button class="btn btn-main" onclick="doLogin()">Masuk</button>
   </div>
 
   <div id="first-view" class="card hidden" style="margin-top: 10vh;">
@@ -100,7 +101,7 @@
       </div>
       
       <hr>
-      <span class="lbl">Grafik Kehadiran</span>
+      <span class="lbl">Grafik Kehadiran (Maksimal 2 / Hari)</span>
       <canvas id="cUserBulan" style="margin-bottom:15px; max-height:200px;"></canvas>
 
       <hr>
@@ -114,6 +115,7 @@
 
   <div id="admin-view" class="hidden">
     <div class="card" style="margin-top:20px;">
+      <img id="logoAdmin" src="" class="logo-img" alt="Logo">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 style="font-size:20px;">Panel Admin</h2>
         <button onclick="doExit()" style="background:none; border:none; font-size:22px; color:var(--text-light); cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -123,7 +125,12 @@
       <input type="text" id="aLogo" class="form-control" placeholder="URL Gambar Logo">
       <textarea id="aHead" class="form-control" placeholder="HTML Header Cetak A4" rows="3"></textarea>
       <textarea id="aFoot" class="form-control" placeholder="HTML Footer Cetak A4" rows="3"></textarea>
+      <input type="number" id="aRadius" class="form-control" placeholder="Radius Maksimal Absen (meter)" min="0">
       <button class="btn btn-green" onclick="saveSet()">Simpan Pengaturan</button>
+      <hr>
+      <span class="lbl">Grafik Bulanan Tiap Area</span>
+      <input type="month" id="blnAdminChart" class="form-control" onchange="loadAdminChart()">
+      <div style="margin-bottom:15px;"><canvas id="cAdminArea" style="max-height:220px;"></canvas></div>
       <hr>
       <span class="lbl">Kalender Libur</span>
       <div style="display:flex; gap:10px;">
@@ -139,15 +146,9 @@
       <select id="eList" class="form-control" onchange="loadFormEdit()"></select>
       <input type="text" id="eId" class="form-control" placeholder="ID Pegawai">
       <input type="text" id="eNama" class="form-control" placeholder="Nama Lengkap">
-      <input type="text" id="ePass" class="form-control" placeholder="Sandi">
+      <input type="text" id="ePass" class="form-control" placeholder="Sandi (kosongkan jika tidak diubah)">
       <input type="text" id="eJab" class="form-control" placeholder="Jabatan">
-      <select id="eArea" class="form-control">
-        <option value="Kramat Jati">Kramat Jati</option>
-        <option value="Lenteng Agung">Lenteng Agung</option>
-        <option value="Ciracas">Ciracas</option>
-        <option value="Pondok Gede">Pondok Gede</option>
-        <option value="Bulungan">Bulungan</option>
-      </select>
+      <select id="eArea" class="form-control"></select>
       <select id="eRole" class="form-control"><option value="staff">Staff</option><option value="admin">Admin</option></select>
       <div style="display:flex; gap:10px; margin-bottom:12px;">
         <input type="text" id="eAlamat" class="form-control" placeholder="Cari alamat" style="margin-bottom:0;">
@@ -158,6 +159,7 @@
       <input type="text" id="eKoor" class="form-control" readonly placeholder="Klik peta untuk titik">
       <button class="btn btn-main" onclick="saveUser()">Simpan Data Pegawai</button>
     </div>
+    
     <div class="card hidden" id="sa-box">
       <h3 style="color:#ef4444; margin-bottom:15px;">Bypass Superadmin</h3>
       <select id="saStaff" class="form-control"></select>
@@ -194,11 +196,18 @@
 
   window.onload = () => {
     flatpickr("#tglIzin", { mode: "multiple", dateFormat: "Y-m-d" });
-    let c = localStorage.getItem('hris_cred');
-    if(c) {
-      let cr = JSON.parse(c);
-      document.getElementById('user').value = cr.u; document.getElementById('pass').value = cr.p;
-      doLogin(true);
+    let t = localStorage.getItem('hris_token');
+    if (t) {
+      uData.token = t;
+      Swal.fire({title: 'Memuat sesi...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+      reqAPI("cekSesi", {}, res => {
+        if (res.status === "success") {
+          uData = Object.assign(uData, res);
+          lanjutSetelahLogin();
+        } else {
+          localStorage.removeItem('hris_token');
+        }
+      });
     }
   };
 
@@ -213,9 +222,20 @@
     let a = Math.sin((lat2-lat1)*p/2)**2 + Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin((lon2-lon1)*p/2)**2;
     return 6371e3 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
-  function reqAPI(body, cb) {
+  function reqAPI(aksi, extra, cb) {
+    let body = Object.assign({ aksi: aksi, token: uData.token || null }, extra || {});
     fetch(API_URL, { method: 'POST', redirect: 'follow', headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body) })
-    .then(r => r.json()).then(res => { Swal.close(); cb(res); }).catch(() => { Swal.fire('Error', 'Gagal memproses data.', 'error'); });
+    .then(r => r.json())
+    .then(res => {
+      Swal.close();
+      if (res.needLogin) {
+        localStorage.removeItem('hris_token');
+        Swal.fire('Sesi Berakhir', 'Silakan login kembali.', 'warning').then(() => location.reload());
+        return;
+      }
+      cb(res);
+    })
+    .catch(() => { Swal.fire('Error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.', 'error'); });
   }
   function show(id) { document.querySelectorAll('.app-container > div').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
   function togglePass() {
@@ -227,39 +247,57 @@
     document.querySelectorAll('.logo-img').forEach(img => img.src = url);
   }
   function doExit() {
-    localStorage.removeItem('hris_cred');
-    window.close(); window.location.href="about:blank";
+    localStorage.removeItem('hris_token');
+    location.reload();
   }
 
-  function doLogin(isAuto) {
+  function doLogin() {
     let u = document.getElementById('user').value, p = document.getElementById('pass').value;
-    if(!isAuto) Swal.fire({title: 'Memeriksa Kredensial...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "login", user: u, pass: p, deviceId: getDid()}, res => {
+    if(!u || !p) return Swal.fire('Error', 'Username dan password wajib diisi', 'error');
+    Swal.fire({title: 'Memeriksa Kredensial...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+    reqAPI("login", {user: u, pass: p, deviceId: getDid()}, res => {
       if (res.status === "success") {
-        localStorage.setItem('hris_cred', JSON.stringify({u:u, p:p}));
-        uData = res; uData.u = u;
-        if(res.setting && res.setting.logo) applyLogo(res.setting.logo);
-        if (res.isFirst === true || res.isFirst === "TRUE") {
-          show('first-view');
-        } else if (res.role === "admin" || res.role === "superadmin") { 
-          show('admin-view'); 
-          document.getElementById('aLock').value = res.setting.lock.toString();
-          document.getElementById('aLogo').value = res.setting.logo;
-          document.getElementById('aHead').value = res.setting.header;
-          document.getElementById('aFoot').value = res.setting.footer;
-          loadAdminData();
-          if(res.role === "superadmin") { document.getElementById('sa-box').classList.remove('hidden'); loadBypassMap(); }
-        } else { 
-          show('staff-view'); 
-          document.getElementById('sNama').innerText = res.nama; document.getElementById('sArea').innerText = res.area;
-          setupRules(); runClock(); loadUserDash();
-          navigator.geolocation.getCurrentPosition(p => {
-            let j = getJarak(uData.koordinat.lat, uData.koordinat.lng, p.coords.latitude, p.coords.longitude);
-            document.getElementById('sJarak').innerText = "Jarak ke " + uData.area + ": " + Math.round(j) + " meter";
-          });
-        }
-      } else if(!isAuto) Swal.fire('Gagal', res.msg, 'error');
+        localStorage.setItem('hris_token', res.token);
+        uData = res; uData.u = u; uData.token = res.token;
+        lanjutSetelahLogin();
+      } else {
+        Swal.fire('Gagal', res.msg, 'error');
+      }
     });
+  }
+
+  function lanjutSetelahLogin() {
+    if(uData.setting && uData.setting.logo) applyLogo(uData.setting.logo);
+    if (uData.isFirst === true || uData.isFirst === "TRUE") {
+      show('first-view');
+    } else if (uData.role === "admin" || uData.role === "superadmin") {
+      show('admin-view');
+      document.getElementById('aLock').value = uData.setting.lock.toString();
+      document.getElementById('aLogo').value = uData.setting.logo;
+      document.getElementById('aHead').value = uData.setting.header;
+      document.getElementById('aFoot').value = uData.setting.footer;
+      document.getElementById('aRadius').value = uData.setting.maxRadius;
+      let now = new Date();
+      document.getElementById('blnAdminChart').value = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0');
+      populateAreaSelects();
+      loadAdminData(); loadAdminChart();
+      if(uData.role === "superadmin") { document.getElementById('sa-box').classList.remove('hidden'); loadBypassMap(); }
+    } else {
+      show('staff-view');
+      document.getElementById('sNama').innerText = uData.nama; document.getElementById('sArea').innerText = uData.area;
+      setupRules(); runClock(); loadUserDash();
+      navigator.geolocation.getCurrentPosition(p => {
+        let j = getJarak(uData.koordinat.lat, uData.koordinat.lng, p.coords.latitude, p.coords.longitude);
+        document.getElementById('sJarak').innerText = "Jarak ke " + uData.area + ": " + Math.round(j) + " meter";
+      }, () => {
+        document.getElementById('sJarak').innerText = "Lokasi tidak tersedia (izinkan akses GPS)";
+      }, {enableHighAccuracy: true, timeout: 10000});
+    }
+  }
+
+  function populateAreaSelects() {
+    let areas = (uData.setting && uData.setting.areas) || [];
+    document.getElementById('eArea').innerHTML = areas.map(a => `<option value="${a}">${a}</option>`).join('');
   }
 
   function runClock() {
@@ -298,30 +336,28 @@
   function loadUserDash() {
     let now = new Date();
     let bln = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0');
-    reqAPI({aksi: "getBulanUser", user: uData.nama, bln: bln}, res => {
-      let labels = [], masuk = [], pulang = [];
+    reqAPI("getBulanUser", {bln: bln}, res => {
+      let labels = [], skor = [];
       let maxD = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
       for(let i=1; i<=maxD; i++) {
         let dStr = bln + "-" + String(i).padStart(2,'0');
         let day = new Date(dStr).getDay();
         if(day !== 0 && day !== 6 && !uData.setting.libur.includes(dStr)) {
           labels.push(dStr);
-          let m = res.data.find(x => x.tgl === dStr && x.jenis === "Masuk");
-          let p = res.data.find(x => x.tgl === dStr && x.jenis === "Pulang");
-          masuk.push(m ? parseFloat(m.wkt.replace('.', '.')) : null);
-          pulang.push(p ? parseFloat(p.wkt.replace('.', '.')) : null);
+          let m = res.data.filter(x => x.tgl === dStr).length;
+          skor.push(m > 0 ? m : 0);
         }
       }
       if(window.uChart) window.uChart.destroy();
       window.uChart = new Chart(document.getElementById('cUserBulan'), {
         type: 'bar',
-        data: { labels: labels, datasets: [{label:'Masuk', data:masuk, backgroundColor:'#10b981'}, {label:'Pulang', data:pulang, backgroundColor:'#0ea5e9'}] },
+        data: { labels: labels, datasets: [{label:'Kehadiran (Max 2)', data:skor, backgroundColor:'#10b981'}] },
         options: {
+          scales: { y: { max: 2, ticks: { stepSize: 1 } } },
           onClick: (e, els) => {
             if(els.length > 0) {
-              let idx = els[0].index, tgl = labels[idx], dIdx = els[0].datasetIndex;
-              let jenis = dIdx === 0 ? "Masuk" : "Pulang";
-              if(!els[0].element.$context.raw) injectPrompt(tgl, jenis);
+              let idx = els[0].index, tgl = labels[idx];
+              if(skor[idx] < 2) injectPrompt(tgl, skor[idx] === 0 ? "Masuk" : "Pulang");
             }
           }
         }
@@ -333,7 +369,7 @@
     const {value: jam} = await Swal.fire({title: `Isi absen ${jenis}`, text: `Tanggal: ${tgl}`, input: 'time', inputValidator: v => !v && 'Pilih jam!'});
     if(jam) {
       Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-      reqAPI({aksi: "injectAbsen", data: {nama: uData.nama, tgl: tgl, jam: jam, jenis: jenis, area: uData.area}}, r => {
+      reqAPI("injectAbsen", {data: {tgl: tgl, jam: jam, jenis: jenis}}, r => {
         if(r.status==="success") { Swal.fire('Berhasil','','success'); loadUserDash(); }
       });
     }
@@ -344,12 +380,14 @@
 
   function doGantiPass() {
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "gantiPass", user: uData.u, passBaru: document.getElementById('newPass').value}, res => {
+    reqAPI("gantiPass", {passBaru: document.getElementById('newPass').value}, res => {
       if(res.status==="success") { 
         Swal.fire('Berhasil','Silakan login dengan sandi baru','success').then(() => {
-          localStorage.removeItem('hris_cred');
+          localStorage.removeItem('hris_token');
           location.reload(); 
         }); 
+      } else {
+        Swal.fire('Gagal', res.msg || 'Terjadi kesalahan', 'error');
       }
     });
   }
@@ -359,15 +397,27 @@
     document.getElementById('boxCamUtama').classList.remove('hidden'); document.getElementById('boxCamAksi').classList.add('hidden');
     document.getElementById('video').classList.remove('hidden'); document.getElementById('canvas').classList.add('hidden');
     show('cam-view'); 
-    navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}}).then(s => { stream = s; document.getElementById('video').srcObject = s; });
+    navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}})
+      .then(s => { stream = s; document.getElementById('video').srcObject = s; })
+      .catch(() => {
+        Swal.fire('Kamera Tidak Tersedia', 'Izinkan akses kamera untuk melakukan absen.', 'error');
+        show('staff-view');
+      });
   }
 
   function tutupKamera() { show('staff-view'); if(stream) stream.getTracks().forEach(t => t.stop()); }
 
   function ambilFoto() {
     let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
-    c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0, c.width, c.height);
-    b64Tmp = c.toDataURL("image/jpeg", 0.7);
+    const MAX_WIDTH = 640; 
+    let scaleSize = 1;
+    if (v.videoWidth > MAX_WIDTH) {
+      scaleSize = MAX_WIDTH / v.videoWidth;
+    }
+    c.width = v.videoWidth * scaleSize; 
+    c.height = v.videoHeight * scaleSize; 
+    x.drawImage(v, 0, 0, c.width, c.height);
+    b64Tmp = c.toDataURL("image/jpeg", 0.5);
     v.classList.add('hidden'); c.classList.remove('hidden');
     document.getElementById('boxCamUtama').classList.add('hidden'); document.getElementById('boxCamAksi').classList.remove('hidden');
   }
@@ -383,12 +433,14 @@
     navigator.geolocation.getCurrentPosition(p => {
       let lat = p.coords.latitude, lng = p.coords.longitude;
       let jar = getJarak(uData.koordinat.lat, uData.koordinat.lng, lat, lng);
-      reqAPI({aksi: "absen", data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64Tmp, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
+      reqAPI("absen", {data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64Tmp, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
         if(res.status==="success") {
           Swal.fire('Berhasil','Data tersimpan','success');
           if(jAbsen==="Masuk") uData.ctx.masukToday = true;
           if(jAbsen==="Pulang") uData.ctx.pulangToday = true;
           setupRules(); loadUserDash();
+        } else {
+          Swal.fire('Gagal', res.msg || 'Terjadi kesalahan', 'error');
         }
       });
     }, err => { Swal.fire('GPS Gagal', 'Pastikan GPS aktif!', 'error'); }, {enableHighAccuracy: true, timeout: 15000});
@@ -398,7 +450,7 @@
     let t = document.getElementById('tglIzin').value;
     if(!t) return Swal.fire('Error','Pilih tanggal','error');
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "izin", data: {nama: uData.nama, tglArr: t.split(', '), ket: document.getElementById('ketIzin').value, area: uData.area, perangkat: getUa()}}, res => {
+    reqAPI("izin", {data: {tglArr: t.split(', '), ket: document.getElementById('ketIzin').value, perangkat: getUa()}}, res => {
       if(res.status==="success") {
         Swal.fire('Berhasil','Data izin tersimpan','success');
         uData.ctx.izinToday = true; setupRules(); loadUserDash();
@@ -410,7 +462,7 @@
     let bln = document.getElementById('blnCetak').value;
     if(!bln) return Swal.fire('Error','Pilih bulan','error');
     Swal.fire({title: 'Memproses Laporan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "cetak", user: uData.nama, bulan: bln}, res => {
+    reqAPI("cetak", {bulan: bln}, res => {
       let lib = res.set.libur;
       let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:10mm;} body{font-family:sans-serif;} table{width:100%; border-collapse:collapse; margin-top:10px;} th,td{border:1px solid #000; padding:6px; text-align:center; font-size:12px;} .h{background:#ef4444; color:#fff; -webkit-print-color-adjust: exact;}</style></head><body>`;
       html += `<div>${res.set.header}</div><h3 style="text-align:center; margin:10px 0;">Laporan Kehadiran<br>${uData.nama} (${bln})</h3><table><tr><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
@@ -433,9 +485,36 @@
     });
   }
 
+  function loadAdminChart() {
+    let bln = document.getElementById('blnAdminChart').value;
+    if(!bln) return;
+    reqAPI("adminChart", {bln: bln}, res => {
+      let areas = (uData.setting && uData.setting.areas) || [];
+      let datasets = [];
+      let colors = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+      let labels = [];
+      let maxD = new Date(bln.split('-')[0], bln.split('-')[1], 0).getDate();
+      for(let i=1; i<=maxD; i++) labels.push(i);
+      areas.forEach((ar, idx) => {
+        let dArr = [];
+        for(let i=1; i<=maxD; i++) {
+          let tStr = bln + "-" + String(i).padStart(2,'0');
+          dArr.push(res.data[ar][tStr] || 0);
+        }
+        datasets.push({ label: ar, data: dArr, backgroundColor: colors[idx] });
+      });
+      if(window.aChart) window.aChart.destroy();
+      window.aChart = new Chart(document.getElementById('cAdminArea'), {
+        type: 'bar',
+        data: { labels: labels, datasets: datasets },
+        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+      });
+    });
+  }
+
   function saveSet() {
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "saveSet", data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value}}, res => {
+    reqAPI("saveSet", {data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value, maxRadius: Number(document.getElementById('aRadius').value) || 0}}, res => {
       if(res.status==="success") { Swal.fire('Tersimpan','','success'); applyLogo(document.getElementById('aLogo').value); }
     });
   }
@@ -443,18 +522,18 @@
   function addLibur() { 
     if(!document.getElementById('aLibur').value) return;
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "addLibur", tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); 
+    reqAPI("addLibur", {tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); 
   }
   
   function resetAkun() {
     let id = document.getElementById('rUser').value;
     if(!id) return Swal.fire('Error','Pilih akun!','error');
     Swal.fire({title: 'Mereset...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "resetUser", id: id}, res => { if(res.status==="success") Swal.fire('Berhasil','Sandi dan HP direset','success'); });
+    reqAPI("resetUser", {id: id}, res => { if(res.status==="success") Swal.fire('Berhasil','Sandi dan HP direset','success'); });
   }
 
   function loadAdminData() {
-    reqAPI({aksi: "listAllUsers"}, res => {
+    reqAPI("listAllUsers", {}, res => {
       if(res.status === "success") {
         allUsers = res.data; staffList = allUsers.filter(x => x.role === "staff");
         let optU = '<option value="">Pilih Akun...</option>';
@@ -474,13 +553,15 @@
   function loadFormEdit() {
     let id = document.getElementById('eList').value;
     if(!id) {
-      document.getElementById('eId').value = ""; document.getElementById('eNama').value = ""; document.getElementById('ePass').value = "123456";
-      document.getElementById('eJab').value = ""; document.getElementById('eArea').value = "Kramat Jati"; document.getElementById('eRole').value = "staff"; document.getElementById('eKoor').value = "";
+      document.getElementById('eId').value = ""; document.getElementById('eNama').value = ""; document.getElementById('ePass').value = "";
+      document.getElementById('ePass').placeholder = "Sandi (kosongkan untuk default 123456)";
+      document.getElementById('eJab').value = ""; document.getElementById('eArea').selectedIndex = 0; document.getElementById('eRole').value = "staff"; document.getElementById('eKoor').value = "";
       if(sMarker) sMap.removeLayer(sMarker); return;
     }
     let d = allUsers.find(x => x.id === id);
     if(d) {
-      document.getElementById('eId').value = d.id; document.getElementById('eNama').value = d.nama; document.getElementById('ePass').value = d.pass;
+      document.getElementById('eId').value = d.id; document.getElementById('eNama').value = d.nama; document.getElementById('ePass').value = "";
+      document.getElementById('ePass').placeholder = "Sandi (kosongkan jika tidak diubah)";
       document.getElementById('eJab').value = d.jab; document.getElementById('eArea').value = d.area; document.getElementById('eRole').value = d.role; document.getElementById('eKoor').value = d.koor;
       if(d.koor) {
         let k = d.koor.split(',');
@@ -519,14 +600,17 @@
       sMap.setView([lat, lon], 15);
       if(sMarker) sMap.removeLayer(sMarker); sMarker = L.marker([lat, lon]).addTo(sMap);
       document.getElementById('eKoor').value = lat+","+lon;
-    });
+    }, () => Swal.fire('Error','Gagal mendapatkan lokasi. Periksa izin GPS.','error'));
   }
 
   function saveUser() {
     let d = { id: document.getElementById('eId').value, nama: document.getElementById('eNama').value, pass: document.getElementById('ePass').value, jab: document.getElementById('eJab').value, area: document.getElementById('eArea').value, role: document.getElementById('eRole').value, koor: document.getElementById('eKoor').value };
     if(!d.id || !d.nama) return Swal.fire('Error','ID dan Nama wajib','error');
     Swal.fire({title: 'Menyimpan...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "saveUser", data: d}, res => { if(res.status==="success") { Swal.fire('Tersimpan','','success'); loadAdminData(); } });
+    reqAPI("saveUser", {data: d}, res => {
+      if(res.status==="success") { Swal.fire('Tersimpan','','success'); loadAdminData(); }
+      else { Swal.fire('Gagal', res.msg || 'Terjadi kesalahan', 'error'); }
+    });
   }
 
   function loadBypassMap() {
@@ -545,8 +629,9 @@
     let cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = 600; cv.height = 400;
     cx.fillStyle = "#1f2937"; cx.fillRect(0,0,600,400); cx.fillStyle = "#fff"; cx.font = "bold 24px Inter"; cx.fillText("BYPASS SYSTEM", 30, 60); cx.font = "20px Inter"; cx.fillText("Waktu: " + w.toLocaleString('id-ID'), 30, 100);
     Swal.fire({title: 'Menyuntik...', didOpen: () => {Swal.showLoading()}});
-    reqAPI({aksi: "absen", data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.8), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
+    reqAPI("absen", {data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.8), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
       if(res.status==="success") { Swal.fire('Sukses','','success'); document.getElementById('saStaff').value = ""; }
+      else { Swal.fire('Gagal', res.msg || 'Terjadi kesalahan', 'error'); }
     });
   }
 </script>
