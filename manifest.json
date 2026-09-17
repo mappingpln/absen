@@ -1,12 +1,12 @@
 {
-  "name": "Portal Absensi",
-  "short_name": "Absensi",
+  "name": "Absen Mapping",
+  "short_name": "Absen",
   "description": "Aplikasi absensi karyawan berbasis lokasi dan foto",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
+  "background_color": "#f1f5f9",
   "theme_color": "#0ea5e9",
   "icons": [
     {
