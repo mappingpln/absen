@@ -10,10 +10,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
   <style>
     :root { --bg: #f1f5f9; --main: #0ea5e9; --main-hover: #0284c7; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -238,7 +238,9 @@
   let clockInt;
 
   window.onload = () => {
-    flatpickr("#tglIzin", { mode: "multiple", dateFormat: "Y-m-d" });
+    if (typeof flatpickr !== "undefined") {
+      flatpickr("#tglIzin", { mode: "multiple", dateFormat: "Y-m-d" });
+    }
     let t = localStorage.getItem('hris_token');
     if (t) {
       uData.token = t;
@@ -510,7 +512,7 @@
 
   function ambilFoto() {
     let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
-    const MAX = 640; let scl = v.videoWidth > MAX ? MAX / v.videoWidth : 1;
+    const MAX = 480; let scl = v.videoWidth > MAX ? MAX / v.videoWidth : 1;
     c.width = v.videoWidth * scl; c.height = v.videoHeight * scl; x.drawImage(v, 0, 0, c.width, c.height);
     b64Tmp = c.toDataURL("image/jpeg", 0.5);
     v.classList.add('hidden'); c.classList.remove('hidden');
