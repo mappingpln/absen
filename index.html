@@ -14,8 +14,42 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+  <script>
+    (function (global, factory) {
+      typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+      typeof define === 'function' && define.amd ? define(['exports'], factory) :
+      (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.id = {}));
+    }(this, (function (exports) { 'use strict';
+      var fp = typeof window !== "undefined" && window.flatpickr !== undefined ? window.flatpickr : { l10ns: {} };
+      var Indonesian = {
+        weekdays: { shorthand: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], longhand: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] },
+        months: { shorthand: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"], longhand: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"] },
+        firstDayOfWeek: 1, ordinal: function () { return ""; }
+      };
+      fp.l10ns.id = Indonesian;
+      var id = fp.l10ns;
+      exports.Indonesian = Indonesian;
+      exports.default = id;
+      Object.defineProperty(exports, '__esModule', { value: true });
+    })));
+
+    if(localStorage.getItem('hris_dark') === 'true') { document.body.classList.add('dark-mode'); }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      let isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('hris_dark', isDark);
+      document.getElementById('dmIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+  </script>
   <style>
     :root { --bg: #f1f5f9; --main: #0ea5e9; --main-hover: #0284c7; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; }
+    body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-light: #94a3b8; --border: #334155; }
+    body.dark-mode .form-control { background: #0f172a; color: #f8fafc; }
+    body.dark-mode .form-control:focus { background: #1e293b; }
+    body.dark-mode .clock-box { background: #0f172a; border-color: #334155; }
+    body.dark-mode .btn-out { color: #f8fafc; border-color: #334155; }
+    body.dark-mode .btn-out:hover { background: #334155; }
+    body.dark-mode .pwa-btn { background: #475569; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background: var(--bg); display: flex; justify-content: center; color: var(--text); }
     .app-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; padding-bottom: 30px; }
@@ -42,19 +76,27 @@
     .lbl { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
     .radio-group { display: flex; gap: 15px; margin-bottom: 14px; font-size: 14px; }
     .pwa-btn { background: #334155; color: #fff; font-size: 13px; padding: 10px; border-radius: 8px; font-weight: 600; text-align: center; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; min-height: 20px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @media print {
       @page { size: A4; margin: 10mm; }
       body { background: #fff; margin: 0; padding: 0; font-size: 11px; }
       .app-container { max-width: 100%; box-shadow: none; border: none; padding: 0; }
       .card { box-shadow: none; border: none; padding: 0; margin: 0; }
-      table { page-break-inside: auto; }
+      table { page-break-inside: auto; width: 100%; }
       tr { page-break-inside: avoid; page-break-after: auto; }
       th, td { padding: 6px !important; }
+      th:nth-child(1), td:nth-child(1) { width: 15%; }
+      th:nth-child(2), td:nth-child(2) { width: 20%; }
+      th:nth-child(3), td:nth-child(3) { width: 15%; }
+      th:nth-child(4), td:nth-child(4) { width: 15%; }
+      th:nth-child(5), td:nth-child(5) { width: 35%; }
       .page { page-break-after: always; }
     }
   </style>
 </head>
 <body>
+<button onclick="toggleDarkMode()" style="position:fixed; bottom:20px; right:20px; z-index:100; border-radius:50%; width:45px; height:45px; border:none; background:var(--main); color:#fff; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.3);"><i class="fa-solid fa-moon" id="dmIcon"></i></button>
 <div class="app-container">
   <div id="login-view" class="card" style="margin-top: 8vh;">
     <img id="logoLogin" src="" class="logo-img" alt="">
@@ -109,7 +151,8 @@
       </div>
       <hr>
       <span class="lbl">Grafik Kehadiran Bulanan</span>
-      <canvas id="cUserBulan" style="margin-bottom:18px; max-height:220px;"></canvas>
+      <div id="skelUserChart" class="skeleton" style="height:220px; margin-bottom:18px;"></div>
+      <canvas id="cUserBulan" class="hidden" style="margin-bottom:18px; max-height:220px;"></canvas>
       <hr>
       <span class="lbl">Cetak Laporan (A4)</span>
       <div style="display:flex; gap:12px;">
@@ -150,15 +193,22 @@
         <option value="pagi">5 Pegawai Paling Pagi</option>
         <option value="siang">5 Pegawai Paling Siang</option>
       </select>
-      <div style="margin-bottom:18px;"><canvas id="cStatChart" style="max-height:240px;"></canvas></div>
+      <div id="skelStatChart" class="skeleton" style="height:240px; margin-bottom:18px;"></div>
+      <div style="margin-bottom:18px;"><canvas id="cStatChart" class="hidden" style="max-height:240px;"></canvas></div>
 
       <hr>
       <span class="lbl">Grafik Keterlambatan, Izin & Alpha</span>
       <input type="month" id="blnAdminChart" class="form-control" onchange="loadAdminChart()">
-      <div style="margin-bottom:18px;"><canvas id="cAdminArea" style="max-height:240px;"></canvas></div>
+      <div id="skelAdminArea" class="skeleton" style="height:240px; margin-bottom:18px;"></div>
+      <div style="margin-bottom:18px;"><canvas id="cAdminArea" class="hidden" style="max-height:240px;"></canvas></div>
       
       <hr>
-      <span class="lbl">Cetak Laporan Semua User (A4)</span>
+      <span class="lbl">Cetak Laporan Bulanan (A4)</span>
+      <div style="display:flex; gap:12px; margin-bottom:14px;">
+        <select id="aCetakUser" class="form-control" style="margin-bottom:0; flex:1;">
+          <option value="Semua">Semua User</option>
+        </select>
+      </div>
       <div style="display:flex; gap:12px;">
         <input type="month" id="aBlnCetak" class="form-control" style="margin-bottom:0;">
         <button class="btn btn-out" onclick="cetakSemuaAbsen()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-print"></i></button>
@@ -187,7 +237,7 @@
       </div>
       <button class="btn btn-red" onclick="resetAkun()">Proses Reset</button>
       <hr>
-      <button class="btn btn-out" onclick="document.getElementById('admin-user-form').classList.toggle('hidden')">Tampilkan Tambah/Edit User <i class="fa-solid fa-caret-down"></i></button>
+      <button class="btn btn-out" onclick="toggleEditUserForm()">Tampilkan Tambah/Edit User <i class="fa-solid fa-caret-down"></i></button>
       <div id="admin-user-form" class="hidden" style="margin-top:15px; padding:15px; border:1px dashed var(--border); border-radius:12px;">
         <label class="lbl">Pilih User</label>
         <select id="eList" class="form-control" onchange="loadFormEdit()"></select>
@@ -221,6 +271,13 @@
       <select id="saStaff" class="form-control"></select>
       <select id="saJenis" class="form-control"><option value="Masuk">Masuk</option><option value="Pulang">Pulang</option></select>
       <input type="datetime-local" id="saWaktu" class="form-control">
+      
+      <label class="lbl">Ubah Perangkat (Opsional)</label>
+      <input type="text" id="saPerangkat" class="form-control" placeholder="Kosongkan untuk tetap pakai HP karyawan">
+      
+      <label class="lbl">Foto Absen (Opsional)</label>
+      <input type="file" id="saFoto" class="form-control" accept="image/*">
+      
       <div style="display:flex; gap:10px; margin-bottom:12px;">
           <input type="text" id="saAlamat" class="form-control" placeholder="Cari alamat" style="margin-bottom:0;">
           <button class="btn btn-out" onclick="cariAlamatBypass()" style="margin-bottom:0; width:auto; padding:0 18px;"><i class="fa-solid fa-search"></i></button>
@@ -251,6 +308,39 @@
   const DEFAULT_LOGO = "https://mappingpln.github.io/absen/Logo.png";
   const START_DATE_STR = "2026-09-17";
   let pwaPrompt;
+  let dbOffline;
+
+  function initIDB(callback) {
+    let req = indexedDB.open("HRIS_DB", 1);
+    req.onupgradeneeded = e => {
+      let db = e.target.result;
+      if (!db.objectStoreNames.contains("static_data")) {
+        db.createObjectStore("static_data");
+      }
+    };
+    req.onsuccess = e => {
+      dbOffline = e.target.result;
+      if (callback) callback();
+    };
+    req.onerror = () => { if (callback) callback(); };
+  }
+
+  function saveToIDB(key, value) {
+    if (!dbOffline) return;
+    try {
+      dbOffline.transaction("static_data", "readwrite").objectStore("static_data").put(value, key);
+    } catch(e) {}
+  }
+
+  function getFromIDB(key, callback) {
+    if (!dbOffline) return callback(null);
+    try {
+      let req = dbOffline.transaction("static_data", "readonly").objectStore("static_data").get(key);
+      req.onsuccess = () => callback(req.result);
+      req.onerror = () => callback(null);
+    } catch(e) { callback(null); }
+  }
+
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault(); pwaPrompt = e;
     document.querySelectorAll('.pwa-btn').forEach(b => b.classList.remove('hidden'));
@@ -272,19 +362,43 @@
   let currentFacingMode = "user";
   let statData = null;
 
+  function showToast(msg, type = "success") {
+    let t = document.createElement('div');
+    t.style.cssText = `position:fixed; top:20px; right:20px; z-index:99999; background:${type==='success'?'#10b981':'#ef4444'}; color:#fff; padding:12px 20px; border-radius:10px; font-weight:600; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1); transition:opacity 0.3s;`;
+    t.innerText = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+  }
+
   window.onload = () => {
-    if (typeof flatpickr !== "undefined") {
-      flatpickr("#tglIzin", { mode: "multiple", dateFormat: "Y-m-d" });
+    if(localStorage.getItem('hris_dark') === 'true') {
+      document.getElementById('dmIcon').className = 'fa-solid fa-sun';
     }
-    let t = localStorage.getItem('hris_token');
-    if (t) {
-      uData.token = t;
-      Swal.fire({title: 'Memuat sesi...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-      reqAPI("cekSesi", {}, res => {
-        if (res.status === "success") { uData = Object.assign(uData, res); lanjutSetelahLogin(); } 
-        else { localStorage.removeItem('hris_token'); applyLogo(DEFAULT_LOGO); }
-      });
-    } else { applyLogo(DEFAULT_LOGO); }
+    
+    initIDB(() => {
+      let t = localStorage.getItem('hris_token');
+      if (t) {
+        uData.token = t;
+        getFromIDB("uDataCache", cachedData => {
+          if (cachedData) {
+            uData = Object.assign(uData, cachedData);
+            lanjutSetelahLogin(true);
+          }
+          reqAPI("cekSesi", {}, res => {
+            if (res.status === "success") { 
+              uData = Object.assign(uData, res); 
+              saveToIDB("uDataCache", res);
+              lanjutSetelahLogin(false); 
+            } else { 
+              localStorage.removeItem('hris_token'); 
+              saveToIDB("uDataCache", null);
+              applyLogo(DEFAULT_LOGO); 
+              show('login-view');
+            }
+          });
+        });
+      } else { applyLogo(DEFAULT_LOGO); }
+    });
   };
 
   function getDid() {
@@ -298,16 +412,23 @@
     let a = Math.sin((lat2-lat1)*p/2)**2 + Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin((lon2-lon1)*p/2)**2;
     return 6371e3 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
+  
   function reqAPI(aksi, extra, cb) {
     let body = Object.assign({ aksi: aksi, token: uData.token || null }, extra || {});
     fetch(API_URL, { method: 'POST', redirect: 'follow', headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body) })
     .then(r => r.json())
     .then(res => {
-      Swal.close();
-      if (res.needLogin) { localStorage.removeItem('hris_token'); Swal.fire('Sesi Berakhir', '', 'warning').then(() => location.reload()); return; }
+      if (res.needLogin) { 
+        localStorage.removeItem('hris_token'); 
+        saveToIDB("uDataCache", null);
+        showToast('Sesi Berakhir', 'error'); 
+        setTimeout(() => location.reload(), 1500); 
+        return; 
+      }
       cb(res);
-    }).catch(() => Swal.fire('Error', 'Gagal terhubung ke server', 'error'));
+    }).catch(() => showToast('Gagal terhubung ke server', 'error'));
   }
+  
   function show(id) { document.querySelectorAll('.app-container > div').forEach(e => {if(e.id !== 'cam-view') e.classList.add('hidden');}); document.getElementById(id).classList.remove('hidden'); }
   function togglePass() {
     let p = document.getElementById('pass'); let i = document.getElementById('eye');
@@ -324,24 +445,33 @@
     document.getElementById('logoStaff').src = url;
     document.getElementById('logoAdmin').src = url;
   }
-  function doExit() { localStorage.removeItem('hris_token'); location.reload(); }
+  function doExit() { 
+    localStorage.removeItem('hris_token'); 
+    saveToIDB("uDataCache", null);
+    location.reload(); 
+  }
 
   function doLogin() {
     let u = document.getElementById('user').value, p = document.getElementById('pass').value;
-    if(!u || !p) return Swal.fire('Error', 'Data wajib diisi', 'error');
-    Swal.fire({title: 'Memeriksa...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+    if(!u || !p) return showToast('Data wajib diisi', 'error');
     reqAPI("login", {user: u, pass: p, deviceId: getDid()}, res => {
-      if (res.status === "success") { localStorage.setItem('hris_token', res.token); uData = res; uData.u = u; uData.token = res.token; lanjutSetelahLogin(); } 
-      else Swal.fire('Gagal', res.msg, 'error');
+      if (res.status === "success") { 
+        localStorage.setItem('hris_token', res.token); 
+        uData = res; uData.u = u; uData.token = res.token; 
+        saveToIDB("uDataCache", res);
+        lanjutSetelahLogin(false); 
+      } 
+      else showToast(res.msg, 'error');
     });
   }
 
-  function lanjutSetelahLogin() {
+  function lanjutSetelahLogin(isOfflineCache) {
     if(uData.setting && uData.setting.logo) applyLogo(uData.setting.logo);
     else applyLogo(DEFAULT_LOGO);
     
-    if (uData.isFirst === true || uData.isFirst === "TRUE") show('first-view');
-    else if (uData.role === "admin" || uData.role === "superadmin") {
+    if (uData.isFirst === true || uData.isFirst === "TRUE") {
+      show('first-view');
+    } else if (uData.role === "admin" || uData.role === "superadmin") {
       show('admin-view');
       document.getElementById('aLock').value = uData.setting.lock.toString();
       document.getElementById('aLogo').value = uData.setting.logo;
@@ -349,12 +479,33 @@
       document.getElementById('aFoot').value = uData.setting.footer;
       document.getElementById('aRadius').value = uData.setting.maxRadius;
       let now = new Date(); document.getElementById('blnAdminChart').value = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0');
-      populateAreaSelects(); loadAdminData(); loadAdminChart(); loadAreaMap(); loadStatData();
-      if(uData.role === "superadmin") { document.getElementById('sa-box').classList.remove('hidden'); loadBypassMap(); }
+      populateAreaSelects();
+      if (!isOfflineCache) {
+        loadAdminData(); loadAdminChart(); loadStatData();
+      }
+      if(uData.role === "superadmin") { document.getElementById('sa-box').classList.remove('hidden'); }
     } else {
       show('staff-view');
       document.getElementById('sNama').innerText = uData.nama; document.getElementById('sArea').innerText = uData.area;
-      setupRules(); runClock(); loadUserDash(); initStaffMap();
+      setupRules(); runClock(); initStaffMap();
+      if (!isOfflineCache) {
+        loadUserDash();
+      }
+      if (typeof flatpickr !== "undefined") {
+        flatpickr("#tglIzin", {
+          mode: "multiple",
+          dateFormat: "Y-m-d",
+          locale: "id",
+          onDayCreate: function(dObj, dStr, fp, dayElem) {
+            let tgl = dayElem.dateObj;
+            let tglStr = tgl.getFullYear() + "-" + String(tgl.getMonth()+1).padStart(2,'0') + "-" + String(tgl.getDate()).padStart(2,'0');
+            if (tgl.getDay() === 0 || (uData.setting && uData.setting.libur && uData.setting.libur.includes(tglStr))) {
+              dayElem.style.color = "#ef4444";
+              dayElem.style.fontWeight = "bold";
+            }
+          }
+        });
+      }
     }
   }
 
@@ -431,13 +582,8 @@
 
   function toggleIzin() {
     if(uData.ctx.izinToday) {
-      Swal.fire({ title: 'Batalkan Izin?', text: 'Data izin hari ini akan dihapus.', showCancelButton: true, confirmButtonText: 'Ya, Batalkan' }).then(r => {
-        if(r.isConfirmed) {
-          Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
-          reqAPI('batalIzin', {tgl: getTodayStr()}, res => {
-            if(res.status==='success'){ uData.ctx.izinToday = false; setupRules(); loadUserDash(); }
-          });
-        }
+      reqAPI('batalIzin', {tgl: getTodayStr()}, res => {
+        if(res.status==='success'){ uData.ctx.izinToday = false; saveToIDB("uDataCache", uData); setupRules(); loadUserDash(); showToast('Izin dibatalkan'); }
       });
     } else {
       document.getElementById('izinBox').classList.toggle('hidden');
@@ -448,6 +594,8 @@
     let now = new Date(); let bln = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0');
     let tdStr = getTodayStr();
     reqAPI("getBulanUser", {bln: bln}, res => {
+      document.getElementById('skelUserChart').classList.add('hidden');
+      document.getElementById('cUserBulan').classList.remove('hidden');
       let labels = [], dMsk = [], dPlg = [], dIzn = [], dAlpha = [], dLupa = [], dTer = [], dCpt = [];
       let maxD = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
       for(let i=1; i<=maxD; i++) {
@@ -499,16 +647,13 @@
   }
 
   function promptKeterangan(prefix, jenis) {
-    Swal.fire({
-      title: 'Keterangan',
-      html: `<div style="text-align:left; font-size:14px; color:#334155;"><span style="font-weight:600">${prefix}</span><textarea id="ketInput" class="form-control" style="margin-top:8px;" placeholder="Ketik alasan di sini..." rows="3"></textarea></div>`,
-      showCancelButton: true, confirmButtonText: 'Lanjutkan', cancelButtonText: 'Batal',
-      preConfirm: () => {
-        let v = document.getElementById('ketInput').value;
-        if(!v) { Swal.showValidationMessage('Alasan wajib diisi!'); return false; }
-        return prefix + " " + v;
-      }
-    }).then(r => { if(r.isConfirmed) { ketTmp = r.value; bukaKamera(jenis); } });
+    ketTmp = prompt(prefix + " Ketik alasan di sini:") || "";
+    if (!ketTmp && prefix.includes("alasan")) {
+       showToast('Alasan wajib diisi!', 'error');
+       return;
+    }
+    if (ketTmp) ketTmp = prefix + " " + ketTmp;
+    bukaKamera(jenis);
   }
 
   function tryMasuk() {
@@ -525,10 +670,9 @@
   }
 
   function doGantiPass() {
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
     reqAPI("gantiPass", {passBaru: document.getElementById('newPass').value}, res => {
-      if(res.status==="success") { Swal.fire('Berhasil','Login dengan sandi baru','success').then(() => { localStorage.removeItem('hris_token'); location.reload(); }); } 
-      else Swal.fire('Gagal', res.msg, 'error');
+      if(res.status==="success") { showToast('Sandi diubah'); setTimeout(() => { localStorage.removeItem('hris_token'); saveToIDB("uDataCache", null); location.reload(); }, 1500); } 
+      else showToast(res.msg, 'error');
     });
   }
 
@@ -539,13 +683,17 @@
   }
 
   function bukaKamera(j) {
+    if (!navigator.onLine) {
+        showToast('Koneksi Internet Wajib Aktif', 'error');
+        return;
+    }
     jAbsen = j; document.getElementById('camTitle').innerText = "Kamera " + j;
     document.getElementById('boxCamUtama').classList.remove('hidden'); document.getElementById('boxCamAksi').classList.add('hidden');
     document.getElementById('video').classList.remove('hidden'); document.getElementById('canvas').classList.add('hidden');
     document.getElementById('cam-view').classList.remove('hidden');
     navigator.mediaDevices.getUserMedia({video: {facingMode: currentFacingMode}})
       .then(s => { stream = s; document.getElementById('video').srcObject = s; })
-      .catch(() => { document.getElementById('cam-view').classList.add('hidden'); Swal.fire('Kamera Error', 'Izinkan akses kamera.', 'error'); });
+      .catch(() => { document.getElementById('cam-view').classList.add('hidden'); showToast('Kamera Error', 'error'); });
   }
 
   function tutupKamera() { document.getElementById('cam-view').classList.add('hidden'); if(stream) stream.getTracks().forEach(t => t.stop()); }
@@ -554,7 +702,7 @@
     let v = document.getElementById('video'), c = document.getElementById('canvas'), x = c.getContext('2d');
     const MAX = 480; let scl = v.videoWidth > MAX ? MAX / v.videoWidth : 1;
     c.width = v.videoWidth * scl; c.height = v.videoHeight * scl; x.drawImage(v, 0, 0, c.width, c.height);
-    b64Tmp = c.toDataURL("image/jpeg", 0.5);
+    b64Tmp = c.toDataURL("image/jpeg", 0.45);
     v.classList.add('hidden'); c.classList.remove('hidden');
     document.getElementById('boxCamUtama').classList.add('hidden'); document.getElementById('boxCamAksi').classList.remove('hidden');
   }
@@ -564,33 +712,47 @@
   }
 
   function kirimFoto() {
-    tutupKamera(); Swal.fire({title: 'Melacak & Mengirim...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+    if (!navigator.onLine) {
+        showToast('Koneksi Internet Terputus', 'error');
+        return;
+    }
+    tutupKamera();
     navigator.geolocation.getCurrentPosition(p => {
       let lat = p.coords.latitude, lng = p.coords.longitude;
       let jar = getJarak(uData.koordinat.lat, uData.koordinat.lng, lat, lng);
       reqAPI("absen", {data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: b64Tmp, area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
-        if(res.status==="success") { Swal.fire('Berhasil','','success'); if(jAbsen==="Masuk") uData.ctx.masukToday = true; if(jAbsen==="Pulang") uData.ctx.pulangToday = true; setupRules(); loadUserDash(); } 
-        else Swal.fire('Gagal', res.msg, 'error');
+        if(res.status==="success") { 
+            showToast('Absen Berhasil'); 
+            if(jAbsen==="Masuk") uData.ctx.masukToday = true; 
+            if(jAbsen==="Pulang") uData.ctx.pulangToday = true; 
+            saveToIDB("uDataCache", uData);
+            setupRules(); loadUserDash(); 
+        } else {
+            showToast(res.msg, 'error');
+        }
       });
-    }, () => Swal.fire('GPS Gagal', 'Pastikan GPS aktif!', 'error'), {enableHighAccuracy: true, timeout: 15000});
+    }, () => showToast('GPS Gagal', 'error'), {enableHighAccuracy: true, timeout: 15000});
   }
 
   function kirimIzin() {
     let t = document.getElementById('tglIzin').value;
-    if(!t) return Swal.fire('Error','Pilih tanggal','error');
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+    if(!t) return showToast('Pilih tanggal', 'error');
     reqAPI("izin", {data: {tglArr: t.split(', '), ket: document.getElementById('ketIzin').value, perangkat: getUa()}}, res => {
-      if(res.status==="success") { Swal.fire('Berhasil','','success'); uData.ctx.izinToday = true; setupRules(); loadUserDash(); document.getElementById('izinBox').classList.add('hidden'); }
+      if(res.status==="success") { 
+          showToast('Izin disimpan'); 
+          uData.ctx.izinToday = true; 
+          saveToIDB("uDataCache", uData);
+          setupRules(); loadUserDash(); document.getElementById('izinBox').classList.add('hidden'); 
+      }
     });
   }
 
   function cetakAbsen() {
     let bln = document.getElementById('blnCetak').value;
-    if(!bln) return Swal.fire('Error','Pilih bulan','error');
-    Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
+    if(!bln) return showToast('Pilih bulan', 'error');
     reqAPI("cetak", {bulan: bln}, res => {
       let lib = res.set.libur;
-      let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:10mm;} body{font-family:'Inter', sans-serif; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:15px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #334155; padding:6px; text-align:center;}</style></head><body>`;
+      let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:10mm;} body{font-family:'Inter', sans-serif; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:15px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #334155; padding:6px; text-align:center;} th:nth-child(1), td:nth-child(1){width:15%;} th:nth-child(2), td:nth-child(2){width:20%;} th:nth-child(3), td:nth-child(3){width:15%;} th:nth-child(4), td:nth-child(4){width:15%;} th:nth-child(5), td:nth-child(5){width:35%;}</style></head><body>`;
       html += `<div>${res.set.header}</div><h3 style="text-align:center; margin:10px 0 5px;">Laporan Kehadiran</h3><p style="text-align:center; font-size:12px; margin:0 0 10px;">Nama: ${uData.nama} | Periode: ${bln}</p><table><tr><th>Hari</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
       let y = parseInt(bln.split('-')[0]), m = parseInt(bln.split('-')[1]);
       let maxD = new Date(y, m, 0).getDate();
@@ -618,16 +780,17 @@
 
   function cetakSemuaAbsen() {
     let bln = document.getElementById('aBlnCetak').value;
-    if(!bln) return Swal.fire('Error','Pilih bulan','error');
-    Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
+    let selectedUser = document.getElementById('aCetakUser').value;
+    if(!bln) return showToast('Pilih bulan', 'error');
     reqAPI("cetakSemua", {bulan: bln}, res => {
       let lib = res.set.libur;
       let users = {};
       res.data.forEach(x => {
+        if (selectedUser !== "Semua" && x.nama !== selectedUser) return;
         if(!users[x.nama]) users[x.nama] = [];
         users[x.nama].push(x);
       });
-      let html = `<html><head><title>Laporan Semua User</title><style>@page{size:A4; margin:10mm;} body{font-family:'Inter', sans-serif; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:15px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #334155; padding:6px; text-align:center;} .page{page-break-after:always;}</style></head><body>`;
+      let html = `<html><head><title>Laporan User</title><style>@page{size:A4; margin:10mm;} body{font-family:'Inter', sans-serif; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:15px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #334155; padding:6px; text-align:center;} th:nth-child(1), td:nth-child(1){width:15%;} th:nth-child(2), td:nth-child(2){width:20%;} th:nth-child(3), td:nth-child(3){width:15%;} th:nth-child(4), td:nth-child(4){width:15%;} th:nth-child(5), td:nth-child(5){width:35%;} .page{page-break-after:always;}</style></head><body>`;
       let y = parseInt(bln.split('-')[0]), m = parseInt(bln.split('-')[1]);
       let maxD = new Date(y, m, 0).getDate();
       let nHari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -667,12 +830,16 @@
   }
 
   function formatJam(mins) {
-    let h = Math.floor(mins/60); let m = Math.round(mins%60);
-    return String(h).padStart(2,'0') + ":" + String(m).padStart(2,'0');
+    let isNeg = mins < 0;
+    let absMins = Math.abs(mins);
+    let h = Math.floor(absMins/60); let m = Math.round(absMins%60);
+    return (isNeg ? "-" : "") + String(h).padStart(2,'0') + ":" + String(m).padStart(2,'0');
   }
 
   function renderStatChart() {
     if(!statData) return;
+    document.getElementById('skelStatChart').classList.add('hidden');
+    document.getElementById('cStatChart').classList.remove('hidden');
     let val = document.getElementById('aStatSel').value;
     let arr = statData[val] || [];
     let labels = arr.map(x => x.nama);
@@ -700,6 +867,8 @@
     let bln = document.getElementById('blnAdminChart').value;
     if(!bln) return;
     reqAPI("adminChart", {bln: bln}, res => {
+      document.getElementById('skelAdminArea').classList.add('hidden');
+      document.getElementById('cAdminArea').classList.remove('hidden');
       window.adminChartLists = res.lists;
       let areas = res.areas;
       let dIzin = [], dTer = [], dPul = [], dAlph = [];
@@ -734,7 +903,7 @@
               if(list.length > 0) {
                 Swal.fire({title: title + ': ' + area, html: '<div style="text-align:left; max-height:250px; overflow-y:auto; font-size:14px;">' + list.join('<br>') + '</div>'});
               } else {
-                Swal.fire(title, 'Tidak ada data.', 'info');
+                showToast('Tidak ada data', 'success');
               }
             }
           }
@@ -778,10 +947,9 @@
     let koor = document.getElementById('aAreaKoor').value;
     if(!sel || !koor) return;
     let pts = koor.split(',');
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
     reqAPI("saveAreaKoor", {area: sel, lat: pts[0], lng: pts[1]}, res => {
       if(res.status==="success") {
-         Swal.fire('Tersimpan','','success');
+         showToast('Koordinat Disimpan');
          if(!uData.setting.areaData) uData.setting.areaData = {};
          uData.setting.areaData[sel] = {lat: parseFloat(pts[0]), lng: parseFloat(pts[1])};
       }
@@ -789,24 +957,21 @@
   }
 
   function saveSet() {
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
     reqAPI("saveSet", {data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value, maxRadius: Number(document.getElementById('aRadius').value) || 0}}, res => {
-      if(res.status==="success") { Swal.fire('Tersimpan','','success'); applyLogo(document.getElementById('aLogo').value); }
+      if(res.status==="success") { showToast('Pengaturan Disimpan'); applyLogo(document.getElementById('aLogo').value); }
     });
   }
   
   function addLibur() { 
     if(!document.getElementById('aLibur').value) return;
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
-    reqAPI("addLibur", {tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") Swal.fire('Tersimpan','','success'); }); 
+    reqAPI("addLibur", {tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") showToast('Hari Libur Ditambahkan'); }); 
   }
   
   function resetAkun() {
     let id = document.getElementById('rUser').value;
     let tipe = document.querySelector('input[name="rTipe"]:checked').value;
-    if(!id) return Swal.fire('Error','Pilih akun!','error');
-    Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
-    reqAPI("resetUser", {id: id, tipe: tipe}, res => { if(res.status==="success") Swal.fire('Berhasil','Sistem direset','success'); });
+    if(!id) return showToast('Pilih akun', 'error');
+    reqAPI("resetUser", {id: id, tipe: tipe}, res => { if(res.status==="success") showToast('Akun Direset'); });
   }
 
   function loadAdminData() {
@@ -816,15 +981,28 @@
         let optU = '<option value="">Pilih Akun...</option>';
         allUsers.forEach(s => { optU += `<option value="${s.id}">${s.id} - ${s.nama}</option>`; });
         document.getElementById('rUser').innerHTML = optU;
+        
+        let optC = '<option value="Semua">Semua User</option>';
+        allUsers.forEach(s => { optC += `<option value="${s.nama}">${s.nama}</option>`; });
+        document.getElementById('aCetakUser').innerHTML = optC;
+        
         let optE = '<option value="">+ Tambah Pegawai Baru</option>';
         allUsers.forEach(s => { optE += `<option value="${s.id}">Edit: ${s.nama}</option>`; });
         document.getElementById('eList').innerHTML = optE;
+        
         let optS = '<option value="">Pilih Staf...</option>';
         staffList.forEach(s => { optS += `<option value="${s.nama}">${s.nama} (${s.area})</option>`; });
         document.getElementById('saStaff').innerHTML = optS;
-        loadEditMap();
       }
     });
+  }
+
+  function toggleEditUserForm() {
+    let f = document.getElementById('admin-user-form');
+    f.classList.toggle('hidden');
+    if(!f.classList.contains('hidden')) {
+      loadEditMap();
+    }
   }
 
   function loadFormEdit() {
@@ -854,6 +1032,7 @@
       document.getElementById('eKoor').value = e.latlng.lat + "," + e.latlng.lng;
       if(sMarker) sMap.removeLayer(sMarker); sMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(sMap);
     });
+    setTimeout(() => sMap.invalidateSize(), 300);
   }
 
   function cariAlamat() {
@@ -861,9 +1040,8 @@
     fetch('https://nominatim.openstreetmap.org/search?format=json&q='+a).then(r=>r.json()).then(res=>{
       if(res.length>0){
         let lat = parseFloat(res[0].lat), lon = parseFloat(res[0].lon);
-        sMap.setView([lat, lon], 15);
-        if(sMarker) sMap.removeLayer(sMarker); sMarker = L.marker([lat, lon]).addTo(sMap);
-        document.getElementById('eKoor').value = lat+","+lon;
+        sMap.setView([lat, lon], 16);
+        document.getElementById('eKoor').value = "";
       }
     });
   }
@@ -874,16 +1052,15 @@
       sMap.setView([lat, lon], 15);
       if(sMarker) sMap.removeLayer(sMarker); sMarker = L.marker([lat, lon]).addTo(sMap);
       document.getElementById('eKoor').value = lat+","+lon;
-    }, () => Swal.fire('Error','GPS bermasalah','error'));
+    }, () => showToast('GPS bermasalah', 'error'));
   }
 
   function saveUser() {
     let d = { id: document.getElementById('eId').value, nama: document.getElementById('eNama').value, pass: document.getElementById('ePass').value, jab: document.getElementById('eJab').value, area: document.getElementById('eArea').value, role: document.getElementById('eRole').value, koor: document.getElementById('eKoor').value };
-    if(!d.id || !d.nama) return Swal.fire('Error','ID dan Nama wajib','error');
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+    if(!d.id || !d.nama) return showToast('ID dan Nama wajib', 'error');
     reqAPI("saveUser", {data: d}, res => {
-      if(res.status==="success") { Swal.fire('Tersimpan','','success'); loadAdminData(); populateAreaSelects(); }
-      else Swal.fire('Gagal', res.msg, 'error');
+      if(res.status==="success") { showToast('Data Disimpan'); loadAdminData(); populateAreaSelects(); }
+      else showToast(res.msg, 'error');
     });
   }
 
@@ -901,22 +1078,40 @@
     fetch('https://nominatim.openstreetmap.org/search?format=json&q='+a).then(r=>r.json()).then(res=>{
       if(res.length>0){
         let lat = parseFloat(res[0].lat), lon = parseFloat(res[0].lon);
-        bMap.setView([lat, lon], 15);
-        if(bMarker) bMap.removeLayer(bMarker); bMarker = L.marker([lat, lon]).addTo(bMap);
-        document.getElementById('saKoor').value = lat+","+lon;
+        bMap.setView([lat, lon], 16);
+        document.getElementById('saKoor').value = "";
       }
     });
   }
 
-  function kirimBypass() {
+  async function kirimBypass() {
     let sn = document.getElementById('saStaff').value, sj = document.getElementById('saJenis').value, sk = document.getElementById('saKoor').value, sw = document.getElementById('saWaktu').value;
-    if(!sn) return Swal.fire('Error','Lengkapi data nama user','error');
+    let sp = document.getElementById('saPerangkat').value;
+    let fileInput = document.getElementById('saFoto');
+    
+    if(!sn) return showToast('Pilih nama user', 'error');
     let st = staffList.find(x => x.nama === sn), w = sw ? new Date(sw) : new Date();
-    let cv = document.createElement('canvas'); cv.width = 10; cv.height = 10;
-    Swal.fire({title: 'Menyuntik...', didOpen: () => Swal.showLoading()});
-    reqAPI("absen", {data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: cv.toDataURL("image/jpeg", 0.5), area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", ket: ""}}, res => {
-      if(res.status==="success") { Swal.fire('Sukses','','success'); document.getElementById('saStaff').value = ""; }
-      else Swal.fire('Gagal', res.msg, 'error');
+    
+    let base64Foto = "";
+    if (fileInput.files.length > 0) {
+       base64Foto = await new Promise((resolve) => {
+          let reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(fileInput.files[0]);
+       });
+    } else {
+       let cv = document.createElement('canvas'); cv.width = 10; cv.height = 10;
+       base64Foto = cv.toDataURL("image/jpeg", 0.45);
+    }
+
+    reqAPI("absen", {data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: base64Foto, area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", perangkatBypass: sp, ket: ""}}, res => {
+      if(res.status==="success") { 
+         showToast('Bypass Berhasil'); 
+         document.getElementById('saStaff').value = ""; 
+         document.getElementById('saPerangkat').value = "";
+         fileInput.value = "";
+      }
+      else showToast(res.msg, 'error');
     });
   }
 </script>
