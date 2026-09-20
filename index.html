@@ -167,6 +167,13 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <div id="cTime" class="clock-time">00:00:00</div>
 <div id="cDate" class="clock-date">Memuat...</div>
 <div id="sJarak" style="font-size:13px; color:var(--main); margin-top:8px; font-weight:600;">Mencari lokasi...</div>
+<div id="wWidget" class="hidden" onclick="changeWeatherPeriod()" style="display:inline-block; margin-top:12px; padding:6px 14px; border-radius:20px; background:var(--card); border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.05); color:var(--text);">
+<span id="wIcon">⛅</span> <span id="wText">Memuat...</span> <span style="color:var(--text-light); font-size:10px; margin-left:4px;">▼</span>
+</div>
+<br>
+<div id="eqWidget" class="hidden" style="display:inline-block; margin-top:8px; padding:6px 14px; border-radius:20px; background:rgba(239,68,68,0.1); border:1px solid #ef4444; font-size:12px; font-weight:600; color:#ef4444;">
+🚨 <span id="eqText"></span>
+</div>
 </div>
 <div id="sMapDash" class="map-box hidden"></div>
 <div id="boxHariLibur" class="hidden" style="background:#ef4444; color:#fff; padding:14px; border-radius:12px; text-align:center; margin-bottom:18px; font-weight:600;">HARI LIBUR</div>
@@ -335,6 +342,52 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 </div>
 <script>
+let wData = null, wIndex = 0;
+function decodeWMO(c) {
+if(c===0) return {i:'☀️', t:'Cerah'};
+if(c>=1 && c<=3) return {i:'⛅', t:'Berawan'};
+if(c===45 || c===48) return {i:'🌫️', t:'Kabut'};
+if((c>=51 && c<=67) || (c>=80 && c<=82)) return {i:'🌧️', t:'Hujan'};
+if(c>=95 && c<=99) return {i:'⛈️', t:'Badai Petir'};
+return {i:'⛅', t:'Berawan'};
+}
+function getWeather(lat, lng) {
+fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,weathercode&timezone=auto&forecast_days=1`)
+.then(r => r.json()).then(d => {
+wData = d;
+document.getElementById('wWidget').classList.remove('hidden');
+wIndex = new Date().getHours();
+renderWeather();
+}).catch(()=>{});
+}
+function renderWeather() {
+if(!wData || !wData.hourly.time[wIndex]) return;
+let temp = Math.round(wData.hourly.temperature_2m[wIndex]);
+let wmo = decodeWMO(wData.hourly.weathercode[wIndex]);
+let hrStr = String(wIndex).padStart(2,'0') + ":00";
+document.getElementById('wIcon').innerText = wmo.i;
+document.getElementById('wText').innerText = hrStr + " WIB: " + wmo.t + ", " + temp + "°C";
+}
+function changeWeatherPeriod() {
+wIndex = (wIndex + 1) % 24;
+renderWeather();
+}
+function getEarthquake(lat, lng) {
+fetch('https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json')
+.then(r => r.json()).then(d => {
+let g = d.Infogempa.gempa;
+let m = parseFloat(g.Magnitude);
+let c = g.Coordinates.split(',');
+let gLat = parseFloat(c[0]), gLng = parseFloat(c[1]);
+let dist = getJarak(lat, lng, gLat, gLng) / 1000;
+let eqTime = new Date(g.DateTime).getTime();
+let diffHrs = (Date.now() - eqTime) / 3600000;
+if(diffHrs < 24 && ((dist <= 100 && m > 4.0) || (dist > 100 && dist <= 200 && m > 5.0))) {
+document.getElementById('eqText').innerText = "Gempa M " + g.Magnitude + " | Jarak " + Math.round(dist) + " km | " + g.Jam;
+document.getElementById('eqWidget').classList.remove('hidden');
+}
+}).catch(()=>{});
+}
 const DEFAULT_LOGO = "https://mappingpln.github.io/absen/Logo.png";
 const START_DATE_STR = "2026-09-17";
 let pwaPrompt;
@@ -563,6 +616,8 @@ if (!isOfflineCache) {
 loadUserDash();
 }
 if (typeof flatpickr !== "undefined") {
+let tglIzinEl = document.getElementById("tglIzin");
+if (tglIzinEl._flatpickr) tglIzinEl._flatpickr.destroy();
 flatpickr("#tglIzin", {
 mode: "multiple",
 dateFormat: "Y-m-d",
@@ -598,7 +653,13 @@ if(uMarkerDash) sMapDash.removeLayer(uMarkerDash);
 uMarkerDash = L.marker([lat, lng], {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', iconSize:[25,41], iconAnchor:[12,41]})}).addTo(sMapDash).bindPopup("Lokasi Anda");
 let group = new L.featureGroup([sMarkerDash, uMarkerDash]);
 sMapDash.fitBounds(group.getBounds().pad(0.2));
-}, () => { document.getElementById('sJarak').innerText = "Lokasi GPS tidak tersedia"; }, {enableHighAccuracy: true, timeout: 10000});
+getWeather(lat, lng);
+getEarthquake(lat, lng);
+}, () => { 
+document.getElementById('sJarak').innerText = "Lokasi GPS tidak tersedia"; 
+getWeather(uData.koordinat.lat, uData.koordinat.lng);
+getEarthquake(uData.koordinat.lat, uData.koordinat.lng);
+}, {enableHighAccuracy: true, timeout: 10000});
 }
 function runClock() {
 let dEl = document.getElementById('cDate'), tEl = document.getElementById('cTime');
@@ -1160,3 +1221,4 @@ else showToast(res.msg, 'error');
 </script>
 </body>
 </html>
+
