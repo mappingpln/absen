@@ -67,7 +67,6 @@ document.documentElement.style.setProperty('--neon-color', nc);
 body.dark-mode, body.dark-mode-neon { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-light: #94a3b8; --border: #334155; }
 body.dark-mode .form-control, body.dark-mode-neon .form-control { background: #0f172a; color: #f8fafc; }
 body.dark-mode .form-control:focus, body.dark-mode-neon .form-control:focus { background: #1e293b; }
-body.dark-mode .clock-box, body.dark-mode-neon .clock-box { background: #0f172a; border-color: #334155; }
 body.dark-mode .btn-out, body.dark-mode-neon .btn-out { color: #f8fafc; border-color: #334155; }
 body.dark-mode .btn-out:hover, body.dark-mode-neon .btn-out:hover { background: #334155; }
 body.dark-mode .pwa-btn, body.dark-mode-neon .pwa-btn { background: #475569; }
@@ -79,7 +78,8 @@ body.dark-mode-neon .card::after { content: ''; position: absolute; inset: 2px; 
 body { background: var(--bg); display: flex; justify-content: center; color: var(--text); }
 .app-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; padding-bottom: 30px; }
 .hidden { display: none !important; }
-.card { background: var(--card); border-radius: 20px; padding: 28px; margin: 20px 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); border: 1px solid var(--border); }
+.card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 20px; padding: 28px; margin: 20px 16px; box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5), 5px 5px 15px rgba(0, 0, 0, 0.05); border: 1px solid rgba(255, 255, 255, 0.3); }
+body.dark-mode .card, body.dark-mode-neon .card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), 5px 5px 10px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); }
 .form-control { width: 100%; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; font-size: 15px; outline: none; transition: border 0.2s, box-shadow 0.2s; background: #f8fafc; }
 .form-control:focus { border-color: var(--main); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); background: #fff; }
 .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; margin-bottom: 14px; transition: all 0.2s; }
@@ -93,7 +93,8 @@ body { background: var(--bg); display: flex; justify-content: center; color: var
 .btn-out:hover { background: #f8fafc; }
 .map-box { height: 220px; width: 100%; border-radius: 12px; margin-bottom: 14px; z-index: 1; border: 1px solid var(--border); }
 .logo-img { max-height: 80px; margin: 0 auto 24px; display: block; object-fit: contain; }
-.clock-box { text-align: center; margin-bottom: 24px; padding: 20px; background: #f8fafc; border-radius: 16px; border: 1px dashed var(--border); }
+.clock-box { text-align: center; margin-bottom: 24px; padding: 20px; background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5), 2px 2px 8px rgba(0, 0, 0, 0.05); }
+body.dark-mode .clock-box, body.dark-mode-neon .clock-box { background: rgba(30, 41, 59, 0.4); border-color: rgba(255, 255, 255, 0.05); box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), 3px 3px 8px rgba(0, 0, 0, 0.15); }
 .clock-time { font-size: 32px; font-weight: 700; color: var(--main); letter-spacing: -0.5px; }
 .clock-date { font-size: 14px; color: var(--text-light); margin-top: 6px; font-weight: 500; }
 video, canvas { width: 100%; border-radius: 12px; }
@@ -107,7 +108,7 @@ hr { border: 0; height: 1px; background: var(--border); margin: 24px 0; }
 @page { size: A4; margin: 10mm; }
 body { background: #fff; margin: 0; padding: 0; font-size: 11px; }
 .app-container { max-width: 100%; box-shadow: none; border: none; padding: 0; }
-.card { box-shadow: none; border: none; padding: 0; margin: 0; }
+.card { box-shadow: none; border: none; padding: 0; margin: 0; background: none; }
 table { page-break-inside: auto; width: 100%; }
 tr { page-break-inside: avoid; page-break-after: auto; }
 th, td { padding: 6px !important; }
@@ -167,11 +168,13 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <div id="cTime" class="clock-time">00:00:00</div>
 <div id="cDate" class="clock-date">Memuat...</div>
 <div id="sJarak" style="font-size:13px; color:var(--main); margin-top:8px; font-weight:600;">Mencari lokasi...</div>
-<div id="wWidget" class="hidden" onclick="changeWeatherPeriod()" style="display:inline-block; margin-top:12px; padding:6px 14px; border-radius:20px; background:var(--card); border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.05); color:var(--text);">
-<span id="wIcon">⛅</span> <span id="wText">Memuat...</span> <span style="color:var(--text-light); font-size:10px; margin-left:4px;">▼</span>
+<div id="wWidget" class="hidden" style="display:inline-flex; align-items:center; justify-content:space-between; margin-top:12px; padding:0; border-radius:20px; background:rgba(148, 163, 184, 0.15); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); border:1px solid rgba(255,255,255,0.1); font-size:13px; font-weight:600; box-shadow:inset 1px 1px 3px rgba(0,0,0,0.1); color:var(--text); overflow:hidden;">
+<div onclick="changeWeather(-1)" style="padding:6px 14px; cursor:pointer; user-select:none; color:var(--text-light);">‹</div>
+<div onclick="changeWeather(0)" style="padding:6px 4px; cursor:pointer; user-select:none; white-space:nowrap;"><span id="wIcon">⛅</span> <span id="wText">Memuat...</span></div>
+<div onclick="changeWeather(1)" style="padding:6px 14px; cursor:pointer; user-select:none; color:var(--text-light);">›</div>
 </div>
 <br>
-<div id="eqWidget" class="hidden" style="display:inline-block; margin-top:8px; padding:6px 14px; border-radius:20px; background:rgba(239,68,68,0.1); border:1px solid #ef4444; font-size:12px; font-weight:600; color:#ef4444;">
+<div id="eqWidget" class="hidden" style="display:inline-block; margin-top:8px; padding:6px 14px; border-radius:20px; background:rgba(239, 68, 68, 0.15); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(239, 68, 68, 0.5); font-size:12px; font-weight:600; color:#ef4444;">
 🚨 <span id="eqText"></span>
 </div>
 </div>
@@ -368,8 +371,10 @@ let hrStr = String(wIndex).padStart(2,'0') + ":00";
 document.getElementById('wIcon').innerText = wmo.i;
 document.getElementById('wText').innerText = hrStr + " WIB: " + wmo.t + ", " + temp + "°C";
 }
-function changeWeatherPeriod() {
-wIndex = (wIndex + 1) % 24;
+function changeWeather(dir) {
+if(dir === 0) wIndex = new Date().getHours();
+else if(dir === -1) wIndex = (wIndex - 1 + 24) % 24;
+else if(dir === 1) wIndex = (wIndex + 1) % 24;
 renderWeather();
 }
 function getEarthquake(lat, lng) {
@@ -1221,4 +1226,3 @@ else showToast(res.msg, 'error');
 </script>
 </body>
 </html>
-
