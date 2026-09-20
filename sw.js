@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v11';
 const CACHE_NAME = 'hris-absen-' + CACHE_VERSION;
 const CDN_CACHE = 'hris-cdn-' + CACHE_VERSION;
 const CORE_ASSETS = ['./', './index.html', './manifest.json'];
