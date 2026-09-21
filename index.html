@@ -80,6 +80,8 @@ body { background: var(--bg); display: flex; justify-content: center; color: var
 .hidden { display: none !important; }
 .card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 20px; padding: 28px; margin: 20px 16px; box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5), 5px 5px 15px rgba(0, 0, 0, 0.05); border: 1px solid rgba(255, 255, 255, 0.3); }
 body.dark-mode .card, body.dark-mode-neon .card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), 5px 5px 10px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); }
+.chart-container { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5), 2px 2px 8px rgba(0, 0, 0, 0.05); }
+body.dark-mode .chart-container, body.dark-mode-neon .chart-container { background: rgba(30, 41, 59, 0.4); border-color: rgba(255, 255, 255, 0.05); box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), 3px 3px 8px rgba(0, 0, 0, 0.15); }
 .form-control { width: 100%; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; font-size: 15px; outline: none; transition: border 0.2s, box-shadow 0.2s; background: #f8fafc; }
 .form-control:focus { border-color: var(--main); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); background: #fff; }
 .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; margin-bottom: 14px; transition: all 0.2s; }
@@ -94,6 +96,15 @@ body.dark-mode .card, body.dark-mode-neon .card { background: rgba(30, 41, 59, 0
 .btn-out:hover { background: #f8fafc; }
 .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes floatWeather { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes rainDrop { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(3px) rotate(-5deg); } }
+@keyframes stormFlash { 0%, 100% { opacity: 1; transform: scale(1); } 5%, 15% { opacity: 0.5; transform: scale(1.1) rotate(-5deg); } 10%, 20% { opacity: 1; transform: scale(1.1) rotate(5deg); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes fogPulse { 0% { opacity: 0.5; transform: translateX(-2px); } 100% { opacity: 1; transform: translateX(2px); } }
+#wIcon { display: inline-block; }
+.anim-sun { animation: floatWeather 3s ease-in-out infinite; }
+.anim-rain { animation: rainDrop 1.5s ease-in-out infinite; }
+.anim-storm { animation: stormFlash 2s infinite; }
+.anim-fog { animation: fogPulse 3s ease-in-out infinite alternate; }
 .toast-box { position: fixed; top: -100px; right: 20px; z-index: 99999; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 .toast-box.show { top: 20px; }
 .toast-err { background: rgba(239, 68, 68, 0.85); border: 1px solid rgba(239, 68, 68, 0.4); }
@@ -120,6 +131,7 @@ hr { border: 0; height: 1px; background: var(--border); margin: 24px 0; }
 body { background: #fff; margin: 0; padding: 0; font-size: 11px; }
 .app-container { max-width: 100%; box-shadow: none; border: none; padding: 0; }
 .card { box-shadow: none; border: none; padding: 0; margin: 0; background: none; }
+.chart-container { background: none; box-shadow: none; border: none; padding: 0; }
 table { page-break-inside: auto; width: 100%; }
 tr { page-break-inside: avoid; page-break-after: auto; }
 th, td { padding: 6px !important; }
@@ -148,7 +160,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <input type="password" id="pass" class="form-control" placeholder="Password">
 <i class="fa-solid fa-eye" id="eye" onclick="togglePass()" style="position: absolute; right: 18px; top: 16px; cursor: pointer; color:var(--text-light);"></i>
 </div>
-<button class="btn btn-main" onclick="doLogin()">Masuk</button>
+<button id="btnLogin" class="btn btn-main" onclick="doLogin()">Masuk</button>
 </div>
 <div id="first-view" class="card hidden" style="margin-top: 8vh;">
 <img id="logoFirst" src="" class="logo-img" alt="">
@@ -158,7 +170,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <input type="password" id="newPass" class="form-control" placeholder="Masukkan Sandi Baru">
 <i class="fa-solid fa-eye" id="eyeNew" onclick="toggleNewPass()" style="position: absolute; right: 18px; top: 16px; cursor: pointer; color:var(--text-light);"></i>
 </div>
-<button class="btn btn-green" onclick="doGantiPass()">Simpan Sandi</button>
+<button id="btnGantiPass" class="btn btn-green" onclick="doGantiPass()">Simpan Sandi</button>
 </div>
 <div id="staff-view" class="hidden">
 <div class="card" style="margin-top:20px;">
@@ -199,18 +211,20 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <button class="btn btn-out" id="btnIzin" onclick="toggleIzin()">Izin / Sakit</button>
 <div id="izinBox" class="hidden" style="margin-top:14px;">
 <input type="text" id="tglIzin" class="form-control" placeholder="Pilih Tanggal Izin">
-<textarea id="ketIzin" class="form-control" maxlength="255" placeholder="Keterangan" rows="3"></textarea>
-<button class="btn btn-orange" onclick="kirimIzin()">Simpan Izin</button>
+<textarea id="ketIzin" class="form-control" maxlength="255" placeholder="Keterangan Wajib" rows="3"></textarea>
+<button id="btnKirimIzin" class="btn btn-orange" onclick="kirimIzin()">Simpan Izin</button>
 </div>
 <hr>
 <span class="lbl" style="text-align:center; display:block;">GRAFIK KEHADIRAN BULANAN</span>
-<div id="skelUserChart" class="skeleton" style="height:220px; margin-bottom:18px;"></div>
-<canvas id="cUserBulan" class="hidden" style="margin-bottom:18px; max-height:220px;"></canvas>
+<div class="chart-container" style="margin-bottom:18px;">
+<div id="skelUserChart" class="skeleton" style="height:220px;"></div>
+<canvas id="cUserBulan" class="hidden" style="max-height:220px;"></canvas>
+</div>
 <hr>
 <span class="lbl">Cetak Laporan (A4)</span>
 <div style="display:flex; gap:12px;">
 <input type="month" id="blnCetak" class="form-control" style="margin-bottom:0;">
-<button class="btn btn-out" onclick="cetakAbsen()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-print"></i></button>
+<button id="btnCetakAbsen" class="btn btn-out" onclick="cetakAbsen()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-print"></i></button>
 </div>
 </div>
 </div>
@@ -234,7 +248,14 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <textarea id="aHead" class="form-control" placeholder="Contoh: <h2>Kop Surat</h2>" rows="2"></textarea>
 <label style="font-size:12px; color:var(--text-light); margin-bottom:4px; display:block;">HTML Footer Cetak A4 (Opsional)</label>
 <textarea id="aFoot" class="form-control" placeholder="Contoh: <p>Tanda Tangan</p>" rows="2"></textarea>
-<button class="btn btn-green" onclick="saveSet()">Simpan Pengaturan</button>
+<button id="btnSaveSet" class="btn btn-green" onclick="saveSet()">Simpan Pengaturan</button>
+</div>
+<hr>
+<span class="lbl">Statistik Hari Ini</span>
+<select id="aPieSel" class="form-control" onchange="renderPieChart()"></select>
+<div class="chart-container" style="margin-bottom:18px;">
+<div id="skelPieChart" class="skeleton" style="height:240px;"></div>
+<canvas id="cPieChart" class="hidden" style="max-height:240px;"></canvas>
 </div>
 <hr>
 <span class="lbl">Statistik 31 Hari (Top 5 Pegawai)</span>
@@ -244,13 +265,17 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <option value="pagi">5 Pegawai Paling Pagi</option>
 <option value="siang">5 Pegawai Paling Siang</option>
 </select>
-<div id="skelStatChart" class="skeleton" style="height:240px; margin-bottom:18px;"></div>
-<div style="margin-bottom:18px;"><canvas id="cStatChart" class="hidden" style="max-height:240px;"></canvas></div>
+<div class="chart-container" style="margin-bottom:18px;">
+<div id="skelStatChart" class="skeleton" style="height:240px;"></div>
+<canvas id="cStatChart" class="hidden" style="max-height:240px;"></canvas>
+</div>
 <hr>
 <span class="lbl">Grafik Keterlambatan, Izin & Alpha</span>
 <input type="month" id="blnAdminChart" class="form-control" onchange="loadAdminChart()">
-<div id="skelAdminArea" class="skeleton" style="height:240px; margin-bottom:18px;"></div>
-<div style="margin-bottom:18px;"><canvas id="cAdminArea" class="hidden" style="max-height:240px;"></canvas></div>
+<div class="chart-container" style="margin-bottom:18px;">
+<div id="skelAdminArea" class="skeleton" style="height:240px;"></div>
+<canvas id="cAdminArea" class="hidden" style="max-height:240px;"></canvas>
+</div>
 <hr>
 <span class="lbl">Cetak Laporan Bulanan (A4)</span>
 <div style="display:flex; gap:12px; margin-bottom:14px;">
@@ -260,13 +285,13 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 <div style="display:flex; gap:12px;">
 <input type="month" id="aBlnCetak" class="form-control" style="margin-bottom:0;">
-<button class="btn btn-out" onclick="cetakSemuaAbsen()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-print"></i></button>
+<button id="btnCetakSemua" class="btn btn-out" onclick="cetakSemuaAbsen()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-print"></i></button>
 </div>
 <hr>
 <span class="lbl">Kalender Libur</span>
 <div style="display:flex; gap:12px;">
 <input type="date" id="aLibur" class="form-control" style="margin-bottom:0;">
-<button class="btn btn-out" onclick="addLibur()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-plus"></i></button>
+<button id="btnAddLibur" class="btn btn-out" onclick="addLibur()" style="margin-bottom:0; width:auto; padding:0 22px;"><i class="fa-solid fa-plus"></i></button>
 </div>
 <hr>
 <span class="lbl">Manajemen Lokasi Area</span>
@@ -277,7 +302,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 <div id="aAreaMap" class="map-box"></div>
 <input type="text" id="aAreaKoor" class="form-control" readonly placeholder="Klik peta untuk koordinat">
-<button class="btn btn-green" onclick="simpanAreaKoor()">Simpan Koordinat Area</button>
+<button id="btnSaveArea" class="btn btn-green" onclick="simpanAreaKoor()">Simpan Koordinat Area</button>
 <hr>
 <span class="lbl">Manajemen Akun</span>
 <select id="rUser" class="form-control"></select>
@@ -285,7 +310,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 <label><input type="radio" name="rTipe" value="pass" checked> Reset Password</label>
 <label><input type="radio" name="rTipe" value="device"> Reset Device ID</label>
 </div>
-<button class="btn btn-red" onclick="resetAkun()">Proses Reset</button>
+<button id="btnResetAkun" class="btn btn-red" onclick="resetAkun()">Proses Reset</button>
 <hr>
 <div style="display:flex; gap:10px; margin-bottom:15px;">
 <button class="btn btn-out" id="btnTabTambah" onclick="switchUserTab('tambah')" style="margin-bottom:0;">Tambah User</button>
@@ -319,7 +344,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 <div id="map" class="map-box"></div>
 <input type="text" id="eKoor" class="form-control" readonly placeholder="Klik peta untuk titik koordinat">
-<button class="btn btn-main" onclick="saveUser()">Simpan Data Pegawai</button>
+<button id="btnSaveUser" class="btn btn-main" onclick="saveUser()">Simpan Data Pegawai</button>
 </div>
 </div>
 <div class="card hidden" id="sa-box">
@@ -337,7 +362,7 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 <div id="saMap" class="map-box"></div>
 <input type="text" id="saKoor" class="form-control" readonly placeholder="Opsional jika hanya edit waktu">
-<button class="btn btn-red" onclick="kirimBypass()">Suntik Data Absen</button>
+<button id="btnBypass" class="btn btn-red" onclick="kirimBypass()">Suntik Data Absen</button>
 </div>
 </div>
 <div id="cam-view" class="card hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:99; margin:0; border-radius:0; border:none; padding:30px 20px;">
@@ -351,19 +376,32 @@ th:nth-child(5), td:nth-child(5) { width: 35%; }
 </div>
 <div style="margin-top:24px; display:flex; gap:12px;" id="boxCamAksi" class="hidden">
 <button class="btn btn-out" onclick="ulangFoto()">Ambil Ulang</button>
-<button class="btn btn-green" onclick="kirimFoto()">Kirimkan</button>
+<button id="btnKirimFoto" class="btn btn-green" onclick="kirimFoto()">Kirimkan</button>
 </div>
 </div>
 </div>
 <script>
-let wData = null, wIndex = 0;
+let wData = null, wIndex = 0, gpsOk = false, tPieData = {};
+function btnLoad(el, load, txt) {
+if(!el) return txt;
+if(load) {
+let o = el.innerHTML;
+el.innerHTML = '<span class="spinner"></span>';
+el.disabled = true; el.style.opacity = '0.8';
+return o;
+} else {
+el.innerHTML = txt;
+el.disabled = false; el.style.opacity = '1';
+return txt;
+}
+}
 function decodeWMO(c) {
-if(c===0) return {i:'☀️', t:'Cerah'};
-if(c>=1 && c<=3) return {i:'⛅', t:'Berawan'};
-if(c===45 || c===48) return {i:'🌫️', t:'Kabut'};
-if((c>=51 && c<=67) || (c>=80 && c<=82)) return {i:'🌧️', t:'Hujan'};
-if(c>=95 && c<=99) return {i:'⛈️', t:'Badai Petir'};
-return {i:'⛅', t:'Berawan'};
+if(c===0) return {i:'☀️', t:'Cerah', a:'anim-sun'};
+if(c>=1 && c<=3) return {i:'⛅', t:'Berawan', a:'anim-sun'};
+if(c===45 || c===48) return {i:'🌫️', t:'Kabut', a:'anim-fog'};
+if((c>=51 && c<=67) || (c>=80 && c<=82)) return {i:'🌧️', t:'Hujan', a:'anim-rain'};
+if(c>=95 && c<=99) return {i:'⛈️', t:'Badai Petir', a:'anim-storm'};
+return {i:'⛅', t:'Berawan', a:'anim-sun'};
 }
 function getWeather(lat, lng) {
 fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,weathercode&timezone=auto&forecast_days=1`)
@@ -379,7 +417,9 @@ if(!wData || !wData.hourly.time[wIndex]) return;
 let temp = Math.round(wData.hourly.temperature_2m[wIndex]);
 let wmo = decodeWMO(wData.hourly.weathercode[wIndex]);
 let hrStr = String(wIndex).padStart(2,'0') + ":00";
-document.getElementById('wIcon').innerText = wmo.i;
+let wIcon = document.getElementById('wIcon');
+wIcon.innerText = wmo.i;
+wIcon.className = wmo.a;
 document.getElementById('wText').innerText = hrStr + " WIB: " + wmo.t + ", " + temp + "°C";
 }
 function changeWeather(dir) {
@@ -612,11 +652,10 @@ location.reload();
 function doLogin() {
 let u = document.getElementById('user').value, p = document.getElementById('pass').value;
 if(!u || !p) return showToast('Data wajib diisi', 'error');
-let btn = document.querySelector('#login-view .btn-main');
-let ori = btn.innerText;
-btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true; btn.style.opacity = '0.8';
+let b = document.getElementById('btnLogin');
+let o = btnLoad(b, true);
 reqAPI("login", {user: u, pass: p, deviceId: getDid()}, res => {
-btn.innerText = ori; btn.disabled = false; btn.style.opacity = '1';
+btnLoad(b, false, o);
 if (res.status === "success") { 
 localStorage.setItem('hris_token', res.token); 
 uData = res; uData.u = u; uData.token = res.token; 
@@ -684,6 +723,7 @@ sMapDash = L.map('sMapDash').setView([uData.koordinat.lat, uData.koordinat.lng],
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(sMapDash);
 sMarkerDash = L.marker([uData.koordinat.lat, uData.koordinat.lng]).addTo(sMapDash).bindPopup("Lokasi Kantor");
 navigator.geolocation.getCurrentPosition(p => {
+gpsOk = true;
 let lat = p.coords.latitude, lng = p.coords.longitude;
 let j = getJarak(uData.koordinat.lat, uData.koordinat.lng, lat, lng);
 document.getElementById('sJarak').innerText = "Jarak: " + Math.round(j) + " meter dari pusat area";
@@ -694,6 +734,7 @@ sMapDash.fitBounds(group.getBounds().pad(0.2));
 getWeather(lat, lng);
 getEarthquake(lat, lng);
 }, () => { 
+gpsOk = false;
 document.getElementById('sJarak').innerText = "Lokasi GPS tidak tersedia"; 
 getWeather(uData.koordinat.lat, uData.koordinat.lng);
 getEarthquake(uData.koordinat.lat, uData.koordinat.lng);
@@ -747,8 +788,23 @@ updateNeonColor();
 }
 function toggleIzin() {
 if(uData.ctx.izinToday) {
+Swal.fire({
+title: 'Batalkan Izin?',
+text: 'Pilih tindakan Anda selanjutnya',
+icon: 'question',
+showCancelButton: true,
+confirmButtonColor: '#10b981',
+cancelButtonColor: '#64748b',
+confirmButtonText: 'Masuk Bekerja',
+cancelButtonText: 'Tetap Izin'
+}).then((result) => {
+if (result.isConfirmed) {
+Swal.showLoading();
 reqAPI('batalIzin', {tgl: getTodayStr()}, res => {
+Swal.close();
 if(res.status==='success'){ uData.ctx.izinToday = false; saveToIDB("uDataCache", uData); setupRules(); loadUserDash(); showToast('Izin dibatalkan'); }
+});
+}
 });
 } else {
 document.getElementById('izinBox').classList.toggle('hidden');
@@ -760,7 +816,7 @@ let tdStr = getTodayStr();
 reqAPI("getBulanUser", {bln: bln}, res => {
 document.getElementById('skelUserChart').classList.add('hidden');
 document.getElementById('cUserBulan').classList.remove('hidden');
-let labels = [], dMsk = [], dPlg = [], dIzn = [], dAlpha = [], dLupa = [], dTer = [], dCpt = [];
+let labels = [], dMsk = [], dPlg = [], dIzn = [], dAlpha = [], dTer = [], dCpt = [];
 let maxD = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
 for(let i=1; i<=maxD; i++) {
 let dStr = bln + "-" + String(i).padStart(2,'0'); 
@@ -772,11 +828,9 @@ let logs = res.data.filter(x => x.tgl === dStr);
 let hasIzin = logs.find(x => x.jenis === "Izin");
 let hasMasuk = logs.find(x => x.jenis === "Masuk");
 let hasPulang = logs.find(x => x.jenis === "Pulang");
-let hasInject = logs.find(x => x.p === "Inject User" || x.p === "Bypass System");
-dMsk.push(0); dPlg.push(0); dIzn.push(0); dAlpha.push(0); dLupa.push(0); dTer.push(0); dCpt.push(0);
+dMsk.push(0); dPlg.push(0); dIzn.push(0); dAlpha.push(0); dTer.push(0); dCpt.push(0);
 let idx = labels.length - 1;
 if (hasIzin) { dIzn[idx] = 2; }
-else if (hasInject && !hasMasuk && !hasPulang) { dLupa[idx] = 2; }
 else if (logs.length > 0) {
 if (hasMasuk) {
 if(hasMasuk.ket.toLowerCase().includes("terlambat")) dTer[idx] = 1; else dMsk[idx] = 1;
@@ -784,7 +838,6 @@ if(hasMasuk.ket.toLowerCase().includes("terlambat")) dTer[idx] = 1; else dMsk[id
 if (hasPulang) {
 if(hasPulang.ket.toLowerCase().includes("pulang cepat")) dCpt[idx] = 1; else dPlg[idx] = 1;
 }
-if (hasInject && !hasMasuk && !hasPulang) dLupa[idx] = (hasMasuk || hasPulang ? 0 : 1); 
 } else {
 if (dStr < tdStr) dAlpha[idx] = 2;
 }
@@ -795,13 +848,12 @@ if(window.uChart) window.uChart.destroy();
 window.uChart = new Chart(document.getElementById('cUserBulan'), {
 type: 'bar',
 data: { labels: labels, datasets: [
-{label:'Masuk', data:dMsk, backgroundColor:'#10b981'},
-{label:'Terlambat', data:dTer, backgroundColor:'#f97316'},
-{label:'Pulang', data:dPlg, backgroundColor:'#3b82f6'},
-{label:'Pulang cepat', data:dCpt, backgroundColor:'#fbbf24'},
-{label:'Izin', data:dIzn, backgroundColor:'#eab308'},
-{label:'Tdk Absen', data:dAlpha, backgroundColor:'#ef4444'},
-{label:'Lupa Absen', data:dLupa, backgroundColor:'#f97316'}
+{label:'Masuk', data:dMsk, backgroundColor:'#10b981', borderWidth:0, borderRadius:4},
+{label:'Terlambat', data:dTer, backgroundColor:'#f97316', borderWidth:0, borderRadius:4},
+{label:'Pulang', data:dPlg, backgroundColor:'#3b82f6', borderWidth:0, borderRadius:4},
+{label:'Pulang cepat', data:dCpt, backgroundColor:'#fbbf24', borderWidth:0, borderRadius:4},
+{label:'Izin', data:dIzn, backgroundColor:'#94a3b8', borderWidth:0, borderRadius:4},
+{label:'Tdk Absen', data:dAlpha, backgroundColor:'#ef4444', borderWidth:0, borderRadius:4}
 ]},
 options: { responsive:true, scales: { x: {stacked:true}, y: {stacked:true, max:2, ticks:{stepSize:1}} } }
 });
@@ -818,18 +870,31 @@ bukaKamera(jenis);
 }
 function tryMasuk() {
 if(uData.ctx.izinToday) return;
+if(!gpsOk) {
+showToast('Memeriksa GPS... Pastikan Lokasi Aktif', 'error');
+navigator.geolocation.getCurrentPosition(() => { gpsOk = true; tryMasuk(); }, () => showToast('GPS ditolak/mati', 'error'), {enableHighAccuracy: true, timeout: 5000});
+return;
+}
 let d = new Date(), mnt = d.getHours() * 60 + d.getMinutes();
 if(mnt > 7*60 + 30) promptKeterangan('Terlambat. alasan:', 'Masuk');
 else { ketTmp = ""; bukaKamera('Masuk'); }
 }
 function tryPulang() {
 if(uData.ctx.izinToday) return;
+if(!gpsOk) {
+showToast('Memeriksa GPS... Pastikan Lokasi Aktif', 'error');
+navigator.geolocation.getCurrentPosition(() => { gpsOk = true; tryPulang(); }, () => showToast('GPS ditolak/mati', 'error'), {enableHighAccuracy: true, timeout: 5000});
+return;
+}
 let d = new Date(), mnt = d.getHours() * 60 + d.getMinutes();
 if(mnt < 16*60) promptKeterangan('Pulang cepat. alasan:', 'Pulang');
 else { ketTmp = ""; bukaKamera('Pulang'); }
 }
 function doGantiPass() {
+let b = document.getElementById('btnGantiPass');
+let o = btnLoad(b, true);
 reqAPI("gantiPass", {passBaru: document.getElementById('newPass').value}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") { showToast('Sandi diubah'); setTimeout(() => { localStorage.removeItem('hris_token'); saveToIDB("uDataCache", null); location.reload(); }, 1500); } 
 else showToast(res.msg, 'error');
 });
@@ -866,11 +931,9 @@ document.getElementById('video').classList.remove('hidden'); document.getElement
 document.getElementById('boxCamUtama').classList.remove('hidden'); document.getElementById('boxCamAksi').classList.add('hidden');
 }
 function kirimFoto() {
-if (!navigator.onLine) {
-showToast('Koneksi Internet Terputus', 'error');
-return;
-}
-tutupKamera();
+if (!navigator.onLine) return showToast('Koneksi Internet Terputus', 'error');
+let b = document.getElementById('btnKirimFoto');
+let o = btnLoad(b, true);
 let fotoData = b64Tmp;
 b64Tmp = "";
 let tglStr = getTodayStr();
@@ -878,6 +941,8 @@ navigator.geolocation.getCurrentPosition(p => {
 let lat = p.coords.latitude, lng = p.coords.longitude;
 let jar = getJarak(uData.koordinat.lat, uData.koordinat.lng, lat, lng);
 reqAPI("absen", {data: {nama: uData.nama, jenis: jAbsen, lokasi: lat+","+lng, jarak: Math.round(jar), foto: "", area: uData.area, perangkat: getUa(), ket: ketTmp}}, res => {
+btnLoad(b, false, o);
+tutupKamera();
 if(res.status==="success") { 
 showToast('Absen Sukses, Menyinkron Foto...'); 
 if(jAbsen==="Masuk") uData.ctx.masukToday = true; 
@@ -890,12 +955,17 @@ setTimeout(prosesAntreanFoto, 1000);
 showToast(res.msg, 'error');
 }
 });
-}, () => showToast('GPS Gagal', 'error'), {enableHighAccuracy: true, timeout: 15000});
+}, () => { btnLoad(b, false, o); showToast('GPS Gagal', 'error'); }, {enableHighAccuracy: true, timeout: 15000});
 }
 function kirimIzin() {
 let t = document.getElementById('tglIzin').value;
+let k = document.getElementById('ketIzin').value.trim();
 if(!t) return showToast('Pilih tanggal', 'error');
-reqAPI("izin", {data: {tglArr: t.split(', '), ket: document.getElementById('ketIzin').value, perangkat: getUa()}}, res => {
+if(!k) return showToast('Keterangan wajib diisi', 'error');
+let b = document.getElementById('btnKirimIzin');
+let o = btnLoad(b, true);
+reqAPI("izin", {data: {tglArr: t.split(', '), ket: k, perangkat: getUa()}}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") { 
 showToast('Izin disimpan'); 
 uData.ctx.izinToday = true; 
@@ -907,7 +977,10 @@ setupRules(); loadUserDash(); document.getElementById('izinBox').classList.add('
 function cetakAbsen() {
 let bln = document.getElementById('blnCetak').value;
 if(!bln) return showToast('Pilih bulan', 'error');
+let b = document.getElementById('btnCetakAbsen');
+let o = btnLoad(b, true);
 reqAPI("cetak", {bulan: bln}, res => {
+btnLoad(b, false, o);
 let lib = res.set.libur;
 let html = `<html><head><title>Cetak Laporan</title><style>@page{size:A4; margin:10mm;} body{font-family:'Inter', sans-serif; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:15px; page-break-inside:auto;} tr{page-break-inside:avoid; page-break-after:auto;} th,td{border:1px solid #334155; padding:6px; text-align:center;} th:nth-child(1), td:nth-child(1){width:15%;} th:nth-child(2), td:nth-child(2){width:20%;} th:nth-child(3), td:nth-child(3){width:15%;} th:nth-child(4), td:nth-child(4){width:15%;} th:nth-child(5), td:nth-child(5){width:35%;}</style></head><body>`;
 html += `<div>${res.set.header}</div><h3 style="text-align:center; margin:10px 0 5px;">Laporan Kehadiran</h3><p style="text-align:center; font-size:12px; margin:0 0 10px;">Nama: ${uData.nama} | Periode: ${bln}</p><table><tr><th>Hari</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr>`;
@@ -938,7 +1011,10 @@ function cetakSemuaAbsen() {
 let bln = document.getElementById('aBlnCetak').value;
 let selectedUser = document.getElementById('aCetakUser').value;
 if(!bln) return showToast('Pilih bulan', 'error');
+let b = document.getElementById('btnCetakSemua');
+let o = btnLoad(b, true);
 reqAPI("cetakSemua", {bulan: bln}, res => {
+btnLoad(b, false, o);
 let lib = res.set.libur;
 let users = {};
 res.data.forEach(x => {
@@ -977,6 +1053,62 @@ let w = window.open('','_blank'); w.document.write(html); w.document.close();
 setTimeout(()=> w.print(), 1000);
 });
 }
+function loadTodayPie() {
+let bln = getTodayStr().substring(0,7);
+reqAPI("cetakSemua", {bulan: bln}, res => {
+let tdStr = getTodayStr();
+let areas = uData.setting.areas || [];
+tPieData = {};
+areas.forEach(a => tPieData[a] = {hadir:0, telat:0, izin:0, alpha:0});
+if(allUsers.length > 0) {
+allUsers.filter(u=>u.role==='staff').forEach(u => {
+let area = u.area;
+if(!tPieData[area]) tPieData[area] = {hadir:0, telat:0, izin:0, alpha:0};
+let logs = res.data.filter(x => x.nama === u.nama && x.tgl === tdStr);
+let isIzin = logs.find(x => x.jenis === "Izin");
+let isMsk = logs.find(x => x.jenis === "Masuk");
+if(isIzin) tPieData[area].izin++;
+else if(isMsk) {
+if(isMsk.ket.toLowerCase().includes("terlambat")) tPieData[area].telat++;
+else tPieData[area].hadir++;
+} else {
+tPieData[area].alpha++;
+}
+});
+}
+let sel = document.getElementById('aPieSel');
+let opts = '<option value="Semua">Semua Area</option>';
+Object.keys(tPieData).forEach(a => opts += `<option value="${a}">${a}</option>`);
+sel.innerHTML = opts;
+document.getElementById('skelPieChart').classList.add('hidden');
+document.getElementById('cPieChart').classList.remove('hidden');
+renderPieChart();
+});
+}
+function renderPieChart() {
+let sel = document.getElementById('aPieSel').value;
+let d = {hadir:0, telat:0, izin:0, alpha:0};
+if(sel === "Semua") {
+Object.keys(tPieData).forEach(a => {
+d.hadir += tPieData[a].hadir; d.telat += tPieData[a].telat; d.izin += tPieData[a].izin; d.alpha += tPieData[a].alpha;
+});
+} else if(tPieData[sel]) {
+d = tPieData[sel];
+}
+if(window.pChart) window.pChart.destroy();
+window.pChart = new Chart(document.getElementById('cPieChart'), {
+type: 'doughnut',
+data: {
+labels: ['Masuk', 'Terlambat', 'Izin', 'Tidak Masuk'],
+datasets: [{
+data: [d.hadir, d.telat, d.izin, d.alpha],
+backgroundColor: ['#10b981', '#f97316', '#94a3b8', '#ef4444'],
+borderWidth: 0
+}]
+},
+options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#64748b', padding: 20 } } } }
+});
+}
 function loadStatData() {
 reqAPI("leaderboard", {}, res => {
 if(res.status==="success") { statData = res; renderStatChart(); }
@@ -1000,7 +1132,7 @@ let tColor = val==="rajin" ? '#10b981' : val==="malas" ? '#ef4444' : val==="pagi
 if(window.sChart) window.sChart.destroy();
 window.sChart = new Chart(document.getElementById('cStatChart'), {
 type: 'bar',
-data: { labels: labels, datasets: [{label: 'Nilai (Jam)', data: data, backgroundColor: tColor}] },
+data: { labels: labels, datasets: [{label: 'Nilai (Jam)', data: data, backgroundColor: tColor, borderWidth:0, borderRadius:4}] },
 options: {
 responsive: true,
 onClick: (e, els) => {
@@ -1032,10 +1164,10 @@ if(window.aChart) window.aChart.destroy();
 window.aChart = new Chart(document.getElementById('cAdminArea'), {
 type: 'bar',
 data: { labels: areas, datasets: [
-{label:'Izin', data:dIzin, backgroundColor:'#eab308'},
-{label:'Terlambat', data:dTer, backgroundColor:'#ef4444'},
-{label:'Pulang Cepat', data:dPul, backgroundColor:'#f97316'},
-{label:'Tidak Absen', data:dAlph, backgroundColor:'#94a3b8'}
+{label:'Izin', data:dIzin, backgroundColor:'#94a3b8', borderWidth:0, borderRadius:4},
+{label:'Terlambat', data:dTer, backgroundColor:'#ef4444', borderWidth:0, borderRadius:4},
+{label:'Pulang Cepat', data:dPul, backgroundColor:'#f97316', borderWidth:0, borderRadius:4},
+{label:'Tidak Absen', data:dAlph, backgroundColor:'#64748b', borderWidth:0, borderRadius:4}
 ]},
 options: { 
 responsive:true, scales: { x: {stacked:false}, y: {stacked:false, ticks:{stepSize:1}} },
@@ -1101,8 +1233,11 @@ function simpanAreaKoor() {
 let sel = document.getElementById('aAreaMapSel').value;
 let koor = document.getElementById('aAreaKoor').value;
 if(!sel || !koor) return;
+let b = document.getElementById('btnSaveArea');
+let o = btnLoad(b, true);
 let pts = koor.split(',');
 reqAPI("saveAreaKoor", {area: sel, lat: pts[0], lng: pts[1]}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") {
 showToast('Koordinat Disimpan');
 if(!uData.setting.areaData) uData.setting.areaData = {};
@@ -1111,19 +1246,26 @@ uData.setting.areaData[sel] = {lat: parseFloat(pts[0]), lng: parseFloat(pts[1])}
 });
 }
 function saveSet() {
+let b = document.getElementById('btnSaveSet');
+let o = btnLoad(b, true);
 reqAPI("saveSet", {data: {lock: document.getElementById('aLock').value==="true", head: document.getElementById('aHead').value, foot: document.getElementById('aFoot').value, logo: document.getElementById('aLogo').value, maxRadius: Number(document.getElementById('aRadius').value) || 0}}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") { showToast('Pengaturan Disimpan'); applyLogo(document.getElementById('aLogo').value); }
 });
 }
 function addLibur() { 
 if(!document.getElementById('aLibur').value) return;
-reqAPI("addLibur", {tgl: document.getElementById('aLibur').value}, res => { if(res.status==="success") showToast('Hari Libur Ditambahkan'); }); 
+let b = document.getElementById('btnAddLibur');
+let o = btnLoad(b, true);
+reqAPI("addLibur", {tgl: document.getElementById('aLibur').value}, res => { btnLoad(b, false, o); if(res.status==="success") showToast('Hari Libur Ditambahkan'); }); 
 }
 function resetAkun() {
 let id = document.getElementById('rUser').value;
 let tipe = document.querySelector('input[name="rTipe"]:checked').value;
 if(!id) return showToast('Pilih akun', 'error');
-reqAPI("resetUser", {id: id, tipe: tipe}, res => { if(res.status==="success") showToast('Akun Direset'); });
+let b = document.getElementById('btnResetAkun');
+let o = btnLoad(b, true);
+reqAPI("resetUser", {id: id, tipe: tipe}, res => { btnLoad(b, false, o); if(res.status==="success") showToast('Akun Direset'); });
 }
 function loadAdminData() {
 reqAPI("listAllUsers", {}, res => {
@@ -1141,6 +1283,7 @@ document.getElementById('eList').innerHTML = optE;
 let optS = '<option value="">Pilih Staf...</option>';
 staffList.forEach(s => { optS += `<option value="${s.nama}">${s.nama} (${s.area})</option>`; });
 document.getElementById('saStaff').innerHTML = optS;
+loadTodayPie();
 }
 });
 }
@@ -1206,7 +1349,10 @@ document.getElementById('eKoor').value = lat+","+lon;
 function saveUser() {
 let d = { id: document.getElementById('eId').value, nama: document.getElementById('eNama').value, pass: document.getElementById('ePass').value, foto: document.getElementById('eFoto').value, jab: document.getElementById('eJab').value, area: document.getElementById('eArea').value, role: document.getElementById('eRole').value, koor: document.getElementById('eKoor').value };
 if(!d.id || !d.nama) return showToast('ID dan Nama wajib', 'error');
+let b = document.getElementById('btnSaveUser');
+let o = btnLoad(b, true);
 reqAPI("saveUser", {data: d}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") { showToast('Data Disimpan'); loadAdminData(); populateAreaSelects(); }
 else showToast(res.msg, 'error');
 });
@@ -1246,7 +1392,10 @@ reader.readAsDataURL(fileInput.files[0]);
 let cv = document.createElement('canvas'); cv.width = 10; cv.height = 10;
 base64Foto = cv.toDataURL("image/jpeg", 0.45);
 }
+let b = document.getElementById('btnBypass');
+let o = btnLoad(b, true);
 reqAPI("absen", {data: {nama: sn, jenis: sj, lokasi: sk, jarak: 0, foto: base64Foto, area: st.area, waktu: w.toISOString(), perangkat: "Bypass System", perangkatBypass: sp, ket: ""}}, res => {
+btnLoad(b, false, o);
 if(res.status==="success") { 
 showToast('Bypass Berhasil'); 
 document.getElementById('saStaff').value = ""; 
