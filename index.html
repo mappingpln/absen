@@ -83,14 +83,25 @@ body.dark-mode .card, body.dark-mode-neon .card { background: rgba(30, 41, 59, 0
 .form-control { width: 100%; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; font-size: 15px; outline: none; transition: border 0.2s, box-shadow 0.2s; background: #f8fafc; }
 .form-control:focus { border-color: var(--main); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); background: #fff; }
 .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; margin-bottom: 14px; transition: all 0.2s; }
+.btn:active { transform: scale(0.96); }
 .btn-main { background: var(--main); color: #fff; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3); }
-.btn-main:hover { background: var(--main-hover); transform: translateY(-1px); }
+.btn-main:hover { background: var(--main-hover); }
 .btn-green { background: #10b981; color: #fff; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
-.btn-green:hover { background: #059669; transform: translateY(-1px); }
+.btn-green:hover { background: #059669; }
 .btn-orange { background: #f59e0b; color: #fff; }
 .btn-red { background: #ef4444; color: #fff; }
 .btn-out { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 .btn-out:hover { background: #f8fafc; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.toast-box { position: fixed; top: -100px; right: 20px; z-index: 99999; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.toast-box.show { top: 20px; }
+.toast-err { background: rgba(239, 68, 68, 0.85); border: 1px solid rgba(239, 68, 68, 0.4); }
+.toast-ok { background: rgba(16, 185, 129, 0.85); border: 1px solid rgba(16, 185, 129, 0.4); }
+.fade-out { animation: fadeOut 0.3s ease-in forwards; }
+.fade-in { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeOut { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(20px); } }
+@keyframes fadeIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 .map-box { height: 220px; width: 100%; border-radius: 12px; margin-bottom: 14px; z-index: 1; border: 1px solid var(--border); }
 .logo-img { max-height: 80px; margin: 0 auto 24px; display: block; object-fit: contain; }
 .clock-box { text-align: center; margin-bottom: 24px; padding: 20px; background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5), 2px 2px 8px rgba(0, 0, 0, 0.05); }
@@ -495,10 +506,13 @@ let currentFacingMode = "user";
 let statData = null;
 function showToast(msg, type = "success") {
 let t = document.createElement('div');
-t.style.cssText = `position:fixed; top:20px; right:20px; z-index:99999; background:${type==='success'?'#10b981':'#ef4444'}; color:#fff; padding:12px 20px; border-radius:10px; font-weight:600; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1); transition:opacity 0.3s;`;
+t.className = `toast-box ${type==='success'?'toast-ok':'toast-err'}`;
 t.innerText = msg;
 document.body.appendChild(t);
-setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+requestAnimationFrame(() => {
+requestAnimationFrame(() => { t.classList.add('show'); });
+});
+setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
 }
 window.onload = () => {
 let savedTheme = localStorage.getItem('hris_theme');
@@ -559,7 +573,22 @@ return;
 cb(res);
 }).catch(() => showToast('Gagal terhubung ke server', 'error'));
 }
-function show(id) { document.querySelectorAll('.app-container > div').forEach(e => {if(e.id !== 'cam-view') e.classList.add('hidden');}); document.getElementById(id).classList.remove('hidden'); }
+function show(id) {
+let c = document.querySelector('.app-container > div:not(.hidden):not(#cam-view)');
+let n = document.getElementById(id);
+if(c && c.id !== id) {
+c.classList.add('fade-out');
+setTimeout(() => {
+c.classList.add('hidden'); c.classList.remove('fade-out');
+n.classList.remove('hidden'); n.classList.add('fade-in');
+setTimeout(() => n.classList.remove('fade-in'), 400);
+}, 300);
+} else {
+document.querySelectorAll('.app-container > div').forEach(e => {if(e.id !== 'cam-view') e.classList.add('hidden');});
+n.classList.remove('hidden'); n.classList.add('fade-in');
+setTimeout(() => n.classList.remove('fade-in'), 400);
+}
+}
 function togglePass() {
 let p = document.getElementById('pass'); let i = document.getElementById('eye');
 p.type = p.type === "password" ? "text" : "password"; i.className = p.type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
@@ -583,7 +612,11 @@ location.reload();
 function doLogin() {
 let u = document.getElementById('user').value, p = document.getElementById('pass').value;
 if(!u || !p) return showToast('Data wajib diisi', 'error');
+let btn = document.querySelector('#login-view .btn-main');
+let ori = btn.innerText;
+btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true; btn.style.opacity = '0.8';
 reqAPI("login", {user: u, pass: p, deviceId: getDid()}, res => {
+btn.innerText = ori; btn.disabled = false; btn.style.opacity = '1';
 if (res.status === "success") { 
 localStorage.setItem('hris_token', res.token); 
 uData = res; uData.u = u; uData.token = res.token; 
